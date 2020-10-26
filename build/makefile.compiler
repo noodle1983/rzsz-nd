@@ -1,0 +1,18 @@
+CC=g++
+cc=gcc
+AR=ar
+RANLIB=ranlib 
+ARFLAGS=rcs
+SYMBOL_DUMPPER=$(PROJBASE)/3PP/google-breakpad/bin/dump_syms
+SHAREDFLAG= -fPIC -shared
+CFLAGs=-DDEBUG -Wall -Wno-class-memaccess -g $(INC_DIR)
+CXXFLAGS=-std=gnu++17 $(CFLAGs)
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	SHARED_LIB += -lrt
+endif
+ifeq ($(UNAME_S),Darwin)
+	SHARED_LIB +=
+endif
+LDFLAGS=$(SHARED_LIB_DIR) $(SHARED_LIB) $(STATIC_LIB)

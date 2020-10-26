@@ -1,0 +1,183 @@
+#########################################
+#          OUT DIR                      #
+#########################################
+DIR_LIST=$(subst /, \ , $(CURDIR))
+MOD_NAME=$(word $(words $(DIR_LIST)), $(DIR_LIST))
+
+BIN_TARGET=$(if $(APPDIR), $(MOD_NAME))
+SHARED_TARGET=$(if $(COMPILE_SHARED),lib$(MOD_NAME).so)
+STATIC_TARGET=lib$(MOD_NAME).a
+TARGET = $(BIN_TARGET) $(SHARED_TARGET) $(STATIC_TARGET)
+
+OUTDIR_PREFIX=$(PROJBASE)/.lib
+OUTDIR=$(OUTDIR_PREFIX)/$(MOD_NAME)
+ALL_TARGET = $(addprefix $(OUTDIR_PREFIX)/, $(TARGET))
+#########################################
+#        Auto TARGET                    #
+#########################################
+AUTOMSGDEF=$(wildcard AutoMsg/*.msg) 
+AUTOMSGTARGET=$(patsubst %.msg, %.h, $(AUTOMSGDEF))
+
+TOLUAPKG=$(wildcard LuaObject/*.pkg)
+TOLUACPP=$(patsubst %.pkg, %.cpp, $(TOLUAPKG))
+
+AUTOTARGET= $(AUTOMSGTARGET) $(TOLUACPP)
+
+#########################################
+#               OBJECTS                 #
+#########################################
+CFILES=$(foreach DIR, $(SUBDIR), $(wildcard $(DIR)/*.c))
+CPPFILES=$(foreach DIR, $(SUBDIR), $(wildcard $(DIR)/*.cpp)) \
+        $(TOLUACPP)
+TMPOBJECTS=$(patsubst %.cpp, %.o, $(CPPFILES)) \
+           $(patsubst %.c, %.o, $(CFILES)) 
+OUTSUBDIR=$(addprefix $(OUTDIR)/, $(SUBDIR) \
+    $(if $(TOLUACPP), LuaObject))
+    
+OBJECTS=$(addprefix $(OUTDIR)/, $(TMPOBJECTS))
+
+#########################################
+#        Test    Target                 #
+#########################################
+TESTDIR=unittest
+TESTCPPFILES=$(foreach DIR, $(TESTDIR), $(wildcard $(DIR)/*.cpp))
+TMPTESTOBJECTS=$(patsubst %.cpp, %.o, $(TESTCPPFILES))
+TESTOUTSUBDIR=$(addprefix $(OUTDIR)/, $(TESTDIR))
+TESTOBJECTS=$(addprefix $(OUTDIR)/, $(TMPTESTOBJECTS))
+TESTTARGET=$(basename $(notdir $(TESTOBJECTS)))
+TEST_OUTDIR=$(OUTDIR_PREFIX)/test
+TEST_FILE=$(foreach DIR, $(TESTDIR), $(wildcard $(DIR)/*.lua) \
+                                     $(wildcard $(DIR)/*.xml) \
+                                     $(wildcard $(DIR)/*.json) \
+                                     $(wildcard $(DIR)/*.pcap))
+TEST_OUT_FILE=$(addprefix $(TEST_OUTDIR)/, $(notdir $(TEST_FILE)))
+
+#########################################
+#         Exe    Target                 #
+#########################################
+EXEDIR=Exe
+EXECPPFILES=$(foreach DIR, $(EXEDIR), $(wildcard $(DIR)/*.cpp))
+TMPEXEOBJECTS=$(patsubst %.cpp, %.o, $(EXECPPFILES))
+EXEOUTSUBDIR=$(addprefix $(OUTDIR)/, $(EXEDIR))
+EXEOBJECTS=$(addprefix $(OUTDIR)/, $(TMPEXEOBJECTS))
+EXETARGET=$(basename $(notdir $(EXEOBJECTS)))
+EXE_OUTDIR=$(OUTDIR_PREFIX)/exe
+EXE_FILE=$(foreach DIR, $(EXEDIR), $(wildcard $(DIR)/*.lua) \
+                                     $(wildcard $(DIR)/*.xml) \
+                                     $(wildcard $(DIR)/*.json) \
+                                     $(wildcard $(DIR)/*.pcap))
+EXE_OUT_FILE=$(addprefix $(EXE_OUTDIR)/, $(notdir $(EXE_FILE)))
+
+#########################################
+#          Crash Dump                   #
+#########################################
+SYMBOL_DIR=symbols
+SYMBOL_OUTDIR=$(OUTDIR_PREFIX)/$(SYMBOL_DIR)
+
+#########################################
+#               Depend                  #
+#########################################
+DEPENDFILES=$(patsubst %.o, %.d, $(OBJECTS))
+DEPENDTARGET=$(patsubst %.d, %.d.tmp, $(DEPENDFILES))
+TESTDEPENDFILES=$(patsubst %.o, %.d, $(TESTOBJECTS))
+TESTDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(TESTDEPENDFILES))
+
+#########################################
+#               Rules                   #
+#########################################
+all:$(TARGET)
+test:$(TESTTARGET)
+
+$(STATIC_TARGET):$(AUTOTARGET) depend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
+	@if [ "" != "$(OBJECTS)" ]; then \
+		echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS)"; \
+		$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS); \
+		echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist ; \
+	fi;
+
+$(SHARED_TARGET):$(AUTOTARGET) depend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
+	$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(SHARED_TARGET) $(OBJECTS)
+	@echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist
+
+$(TESTTARGET):$(AUTOTARGET) $(TARGET) testdepend $(TESTOUTSUBDIR) $(TESTOBJECTS) $(TEST_OUTDIR) $(TEST_OUT_FILE) $(SYMBOL_OUTDIR)
+	$(CC) $(CXXFLAGS) $(OUTDIR)/$(TESTDIR)/$@.o $(OBJECTS) $(LDFLAGS) -o $(TEST_OUTDIR)/$(MOD_NAME)$@
+#@$(SYMBOL_DUMPPER) $(TEST_OUTDIR)/$(MOD_NAME)$@ > $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym
+#	@RT_SYMBOL_DIR=$(SYMBOL_OUTDIR)/`head -n1 $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym | awk '{print $$5;}'`/`head -n1 $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym | awk '{print $$4;}'`; \
+#	if [ ! -d "$$RT_SYMBOL_DIR" ]; then mkdir -p "$$RT_SYMBOL_DIR"; fi; \
+#	cp $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym "$$RT_SYMBOL_DIR"/; \
+#	rm $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym;
+
+$(TEST_OUTDIR)/%:FORCE
+	cp $(TESTDIR)/$* $@
+
+$(OUTDIR):$(OUTDIR_PREFIX)
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+$(OUTDIR_PREFIX):
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+$(TEST_OUTDIR):
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+$(TESTOUTSUBDIR):
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+$(OUTSUBDIR):
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+$(SYMBOL_OUTDIR):$(OUTDIR_PREFIX)
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+-include $(DEPENDFILES)
+-include $(TESTDEPENDFILES)
+$(OUTDIR)/%.d.tmp:%.cpp
+	@echo "building dependancy for $<..."
+	@set -e; rm -f $@ $(OUTDIR)/$*.d; \
+	($(CC) $(CXXFLAGS) -MM -c $< > $@ || rm -f $@) &&  \
+	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*.o $@: ,g' <$@ >$(OUTDIR)/$*.d; 
+
+$(OUTDIR)/%.d.tmp:%.c
+	@echo "building dependancy for $<..."
+	@set -e; rm -f $@ $(OUTDIR)/$*.d; \
+	($(cc) $(CXXFLAGS) -MM -c $< > $@ || rm -f $@) &&  \
+	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*.o $@: ,g' <$@ >$(OUTDIR)/$*.d; 
+
+$(OUTDIR)/%.o:%.cpp
+	$(CC) $(CXXFLAGS) -c $< -o $@
+
+$(OUTDIR)/%.o:%.c
+	$(CC) $(CXXFLAGS) -c $< -o $@
+
+AutoMsg/%.h:AutoMsg/%.msg $(PROJBASE)/build/genMsg.pl
+	perl $(PROJBASE)/build/genMsg.pl $<
+
+LuaObject/%.cpp: LuaObject/%.pkg
+	$(PROJBASE)/3PP/tolua++/bin/tolua++ -o $@ $<
+
+dependdir:
+	@for DIR in $(DEPEND_DIR);  \
+	do                     \
+		make -C $$DIR || exit -1;  \
+	done                  
+
+depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDTARGET)
+testdepend: $(OUTDIR) $(TESTOUTSUBDIR) $(TESTDEPENDTARGET)
+
+
+FORCE:
+
+.PHONY:clean depend test testdepend dependdir
+clean:
+	@rm -rf $(OUTDIR) $(AUTOTARGET) \
+		$(OUTDIR_PREFIX)/$(MOD_NAME).objectlist \
+		$(ALL_TARGET) \
+        $(TEST_OUT_FILE) \
+        $(SYMBOL_OUTDIR) \
+        $(TEST_OUTDIR)/$(MOD_NAME)* 
+	@if [ "1" = `ls -l $(OUTDIR_PREFIX)/ 2>/dev/null | wc -l` ]; then \
+		rm -rf $(OUTDIR_PREFIX); \
+	fi;
+	@if [ "2" = `ls -l $(OUTDIR_PREFIX)/ 2>/dev/null | wc -l` ]; then \
+		rm -rf $(OUTDIR_PREFIX); \
+	fi;
+
