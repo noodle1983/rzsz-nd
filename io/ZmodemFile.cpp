@@ -1,14 +1,10 @@
-#include "zmodem_file.h"
+#include "ZmodemFile.h"
 #include <stdio.h>
 #include <assert.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
-
-extern "C" {
-	int mkdir(const char* dir, int attr);
-}
 
 void createDir(const std::string& thePath)
 {
@@ -98,11 +94,11 @@ bool ZmodemFile::parseInfo(const std::string& fileinfo)
 }
 
 ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& basename, unsigned long long filesize)
-	: filename_(filepath),
+	: file_(filepath.c_str(), std::fstream::in|std::fstream::binary),
+	filename_(filepath),
 	file_size_(filesize),
 	file_time_(0),
 	pos_(0),
-	file_(filepath.c_str(), std::fstream::in|std::fstream::binary),
 	prompt_("<-")
 {
 	prompt_ += basename + ":";
@@ -130,7 +126,7 @@ void ZmodemFile::setPos(unsigned long long pos)
 std::string ZmodemFile::getProgressLine()
 {
 	char buf[128] = {0};
-	_snprintf(buf, sizeof(buf), " %lld/%lld(%d%%)", pos_, file_size_, file_size_ ? int(1.0*100*pos_/file_size_) : 100);
+	snprintf(buf, sizeof(buf), " %lld/%lld(%d%%)", pos_, file_size_, file_size_ ? int(1.0*100*pos_/file_size_) : 100);
 	return prompt_ + buf;
 }
 

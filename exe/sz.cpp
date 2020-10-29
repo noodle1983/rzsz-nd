@@ -1,16 +1,19 @@
+#include "ZmodemSession.h"
+#include "Processor.h"
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
 
+using namespace nd;
+using namespace std;
+
 int main(int argc, char const *argv[])
 {
-    char buf[1024];
-    fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
-    while(true){
-        int numRead = read(0, buf, sizeof(buf));
-        if (numRead > 0) {
-            printf("get %d\n", numRead);
-        }
-    }
+    auto session = new ZmodemSession();
+
+    session->asynHandleEvent(ZmodemSession::RESET_EVT);
+    g_processor->run();
+
     return 0;
 }

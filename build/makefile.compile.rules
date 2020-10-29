@@ -55,7 +55,7 @@ TEST_OUT_FILE=$(addprefix $(TEST_OUTDIR)/, $(notdir $(TEST_FILE)))
 #########################################
 #         Exe    Target                 #
 #########################################
-EXEDIR=Exe
+EXEDIR=exe
 EXECPPFILES=$(foreach DIR, $(EXEDIR), $(wildcard $(DIR)/*.cpp))
 TMPEXEOBJECTS=$(patsubst %.cpp, %.o, $(EXECPPFILES))
 EXEOUTSUBDIR=$(addprefix $(OUTDIR)/, $(EXEDIR))
@@ -85,7 +85,7 @@ TESTDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(TESTDEPENDFILES))
 #########################################
 #               Rules                   #
 #########################################
-all:$(TARGET)
+all:$(TARGET) $(EXETARGET)
 test:$(TESTTARGET)
 
 $(STATIC_TARGET):$(AUTOTARGET) depend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
@@ -101,11 +101,9 @@ $(SHARED_TARGET):$(AUTOTARGET) depend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS
 
 $(TESTTARGET):$(AUTOTARGET) $(TARGET) testdepend $(TESTOUTSUBDIR) $(TESTOBJECTS) $(TEST_OUTDIR) $(TEST_OUT_FILE) $(SYMBOL_OUTDIR)
 	$(CC) $(CXXFLAGS) $(OUTDIR)/$(TESTDIR)/$@.o $(OBJECTS) $(LDFLAGS) -o $(TEST_OUTDIR)/$(MOD_NAME)$@
-#@$(SYMBOL_DUMPPER) $(TEST_OUTDIR)/$(MOD_NAME)$@ > $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym
-#	@RT_SYMBOL_DIR=$(SYMBOL_OUTDIR)/`head -n1 $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym | awk '{print $$5;}'`/`head -n1 $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym | awk '{print $$4;}'`; \
-#	if [ ! -d "$$RT_SYMBOL_DIR" ]; then mkdir -p "$$RT_SYMBOL_DIR"; fi; \
-#	cp $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym "$$RT_SYMBOL_DIR"/; \
-#	rm $(SYMBOL_OUTDIR)/$(MOD_NAME)$@.sym;
+
+$(EXETARGET):$(AUTOTARGET) $(TARGET) testdepend $(EXEOUTSUBDIR) $(EXEOBJECTS) $(EXE_OUTDIR) $(EXE_OUT_FILE) $(SYMBOL_OUTDIR)
+	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 
 $(TEST_OUTDIR)/%:FORCE
 	cp $(TESTDIR)/$* $@
@@ -120,6 +118,12 @@ $(TEST_OUTDIR):
 	@if [ ! -d $@ ]; then mkdir -p $@; fi;
 
 $(TESTOUTSUBDIR):
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+$(EXE_OUTDIR):
+	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+
+$(EXEOUTSUBDIR):
 	@if [ ! -d $@ ]; then mkdir -p $@; fi;
 
 $(OUTSUBDIR):

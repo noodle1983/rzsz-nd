@@ -5,11 +5,13 @@
 #include "Action.h"
 #include "State.h"
 #include "Session.h"
+#include "zmodem.h"
+#include "ZmodemFile.h"
 #include <iostream>
 #include <memory>
 #include <string>
 #include <fstream>
-#include "zmodem.h"
+#include <string.h>
 
 struct frame_tag;
 typedef struct frame_tag frame_t;
@@ -53,12 +55,12 @@ public:
 		DECODE_DONE   = 0,
 		DECODE_PARTLY = 1
 	} DecodeResult;
-	static Fsm::FiniteStateMachine* getZmodemFsm();
 
 	enum FileSelectState{FILE_SELECT_NONE = 0, FILE_SELECTED, FILE_SELECTING};
 
 	ZmodemSession();
 	virtual ~ZmodemSession();
+    static Fsm::FiniteStateMachine* getZmodemFsm();
 	void initState();
 	int processNetworkInput(const char* const str, const int len);
 	void reset();
@@ -154,6 +156,8 @@ private:
 	bool isSz_;
 	unsigned char zsendline_tab[256];
 	FileSelectState file_select_state_;
+
+    ZmodemFile* zmodemFile_;
 
 	uint64_t tick_;
 };

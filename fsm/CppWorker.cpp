@@ -43,6 +43,11 @@ void CppWorker::waitStop()
 
 void CppWorker::process(Job* theJob)
 {
+    if (isToStopM || isWaitStopM){
+        delete theJob;
+        return;
+    }
+
     bool jobQueueEmpty = false;
     {
         lock_guard<mutex> lock(queueMutexM);
@@ -62,6 +67,10 @@ min_heap_item_t* CppWorker::addLocalTimer(
 		TimerCallback theCallback,
 		void* theArg)
 {
+    if (isToStopM || isWaitStopM){
+        return NULL;
+    }
+
 	bool timerHeapEmpty = min_heap_empty(&timerHeapM);
     if (128 > min_heap_size(&timerHeapM))
     {
