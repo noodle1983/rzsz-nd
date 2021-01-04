@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 #include <fstream>
+#include <vector>
 #include <string.h>
 
 struct frame_tag;
@@ -66,6 +67,7 @@ public:
 	void reset();
 	void destroy();
 
+    void sz(std::vector<std::string>& file);
 
 	size_t dataCrcMatched(const size_t begin);
 	unsigned short decodeCrc(const int index, int& consume_len);
@@ -159,6 +161,7 @@ private:
 
     ZmodemFile* zmodemFile_;
 
+    std::vector<std::string> filesToSentM;
 	uint64_t tick_;
 };
 
