@@ -28,7 +28,7 @@ namespace Fsm
             std::map<int, State>::iterator it = statesM.find(theStateId);
             if (it == statesM.end())
             {
-                LOG_FATAL("failed to find state with id" << theStateId);
+                LOG_FATAL("failed to find state with id:" << theStateId);
                 exit(-1);
             }
             return it->second;

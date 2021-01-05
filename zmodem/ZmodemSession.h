@@ -32,6 +32,7 @@ public:
 		FILE_SELECTED_STATE,
 		SEND_ZDATA_STATE,
 		SEND_FLOW_CTRL_STATE,
+        SEND_FILE_STATE,
 		DESTROY_STATE,
 		END_STATE
 	};
@@ -50,6 +51,7 @@ public:
 		DESTROY_EVT,
 		NEXT_EVT,
 		CHECK_FRAME_TYPE_EVT,
+		SEND_FILE_EVT,
 	};
 	typedef enum{
 		DECODE_ERROR  = -1,
@@ -59,15 +61,12 @@ public:
 
 	enum FileSelectState{FILE_SELECT_NONE = 0, FILE_SELECTED, FILE_SELECTING};
 
-	ZmodemSession();
+	ZmodemSession(Fsm::FiniteStateMachine* fsm);
 	virtual ~ZmodemSession();
-    static Fsm::FiniteStateMachine* getZmodemFsm();
 	void initState();
 	int processNetworkInput(const char* const str, const int len);
 	void reset();
 	void destroy();
-
-    void sz(std::vector<std::string>& file);
 
 	size_t dataCrcMatched(const size_t begin);
 	unsigned short decodeCrc(const int index, int& consume_len);
@@ -161,7 +160,6 @@ private:
 
     ZmodemFile* zmodemFile_;
 
-    std::vector<std::string> filesToSentM;
 	uint64_t tick_;
 };
 

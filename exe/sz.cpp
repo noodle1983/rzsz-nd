@@ -1,4 +1,4 @@
-#include "ZmodemSession.h"
+#include "SzSession.h"
 #include "Processor.h"
 #include "Options.h"
 
@@ -35,7 +35,6 @@ void parseOption(int argc, char const *argv[]){
                 exit(-1);
             }
         }
-        cout << endl;
 	} catch (TCLAP::ArgException &e)
 	{ 
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
@@ -47,8 +46,8 @@ int main(int argc, char const *argv[])
 {
     parseOption(argc, argv);
 
-    auto session = new ZmodemSession();
-    session->asynHandleEvent(ZmodemSession::RESET_EVT);
+    auto session = new SzSession();
+    session->sz(g_options->files);
     g_processor->run();
 
     return 0;

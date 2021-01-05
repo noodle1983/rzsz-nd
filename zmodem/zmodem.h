@@ -186,7 +186,19 @@ typedef struct lineseedxon_tag lineseedxon_t;
 
 #pragma   pack()
 
+const char HEX_PREFIX[] = {ZPAD, ZPAD, ZDLE, ZHEX};
+const char BIN32_PREFIX[] = {ZPAD, ZPAD, ZDLE, ZBIN32};
+const char HEX_ARRAY[] = "0123456789abcdef";
 
+int hex2int(char hex);
+unsigned char decHex(const hex_str_t *h);
+void encHex(const unsigned char c, hex_str_t *h);
+void convHex2Plain(const hex_t *hexframe, frame_t* frame);
+void convPlain2Hex(const frame_t* frame, hex_t *hexframe);
+unsigned short calcFrameCrc(const frame_t *frame);
+unsigned long calcFrameCrc32(const frame32_t *frame);
+unsigned long calcBufferCrc32(const char *buf, const unsigned len);
+unsigned getPos(frame_t* frame);
 
 #endif /* ZMODEM_H */
 

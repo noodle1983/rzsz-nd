@@ -1,6 +1,7 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include <iostream>
 #include <fstream>
 
 class FileLogger{
@@ -21,7 +22,7 @@ private:
 #define LOG_DEBUG(msg) 
 #define LOG_INFO(msg) 
 #define LOG_WARN(msg) 
-#define LOG_ERROR(msg) 
-#define LOG_FATAL(msg) 
+#define LOG_ERROR(msg) std::cerr << msg << std::endl
+#define LOG_FATAL(msg) std::cerr << msg << std::endl
 
 #endif
