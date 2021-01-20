@@ -15,13 +15,13 @@ void Fsm::changeState(
     {
         State& curState = theSession->getCurState();
 
-        ActionList& actionList = curState.getActionList(EXIT_EVT);
+        ActionList& actionList = curState.getActionList(Session::EXIT_EVT);
         ActionList::iterator it = actionList.begin();
         if (it != actionList.end())
         {
             LOG_DEBUG(theSession->getSessionName() 
-                    << "[" << theSession->getSessionId() << "] handleEvent("
-                    << theSession->getEventName(EXIT_EVT) << ")");
+                    << "[" << theSession->getSessionId() << "] " << curState.getName() << " handleEvent("
+                    << theSession->getEventName(Session::EXIT_EVT) << ")");
             for (; it != actionList.end(); it++)
             {
                 Action action = *it;
@@ -34,13 +34,13 @@ void Fsm::changeState(
     {
         State& nextState = theSession->toNextState(theNextStateId);
 
-        ActionList& actionList = nextState.getActionList(ENTRY_EVT);
+        ActionList& actionList = nextState.getActionList(Session::ENTRY_EVT);
         ActionList::iterator it = actionList.begin();
         if (it != actionList.end())
         {
             LOG_DEBUG(theSession->getSessionName() 
-                    << "[" << theSession->getSessionId() << "] handleEvent("
-                    << theSession->getEventName(ENTRY_EVT) << ")");
+                    << "[" << theSession->getSessionId() << "] " << nextState.getName() << " handleEvent("
+                    << theSession->getEventName(Session::ENTRY_EVT) << ")");
             for (; it != actionList.end(); it++)
             {
                 Action action = *it;
@@ -65,7 +65,9 @@ void Fsm::generateEvent(
 void Fsm::ignoreEvent(
         Fsm::Session* theSession)
 {
+    State& curState = theSession->getCurState();
     LOG_DEBUG(theSession->getSessionName() 
+            << "[" << theSession->getSessionId() << "] " << curState.getName()
             << " ignore event.");
 }
 

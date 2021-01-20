@@ -14,6 +14,17 @@ namespace Fsm
     class Session
     {
     public:
+        enum PreDefineEvent
+        {
+            ENTRY_EVT     = -1,
+            EXIT_EVT      = -2,
+            TIMEOUT_EVT   = -3,
+            NEXT_EVT      = -4,
+            OK_EVT        = -5, 
+            FAILED_EVT    = -6
+
+        };
+
         Session(
                 FiniteStateMachine* theFsm, 
                 const uint64_t theSessionId);

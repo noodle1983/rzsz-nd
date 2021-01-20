@@ -2,6 +2,7 @@
 #define KFIFOBUFFER_H
 
 #include <sys/types.h>
+#include <atomic>
 
 namespace nd 
 {
@@ -49,8 +50,8 @@ namespace nd
         char* rawM;
         unsigned sizeM;
         unsigned maskM;
-        volatile unsigned readIndexM;
-        volatile unsigned writeIndexM;
+        std::atomic<unsigned> readIndexM;
+        std::atomic<unsigned> writeIndexM;
         unsigned highWaterMarkM;
         unsigned lowWaterMarkM;
     };

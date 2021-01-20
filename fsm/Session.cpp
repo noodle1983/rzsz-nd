@@ -80,7 +80,7 @@ void Session::handleEvent(const int theEventId)
         if (it != actionList.end())
         {
             LOG_DEBUG(getSessionName() 
-                    << "[" << getSessionId() << "] handleEvent("
+                    << "[" << getSessionId() << "] " << curState.getName() << " handleEvent("
                     << getEventName(ENTRY_EVT) << ")");
             for (; it != actionList.end(); it++)
             {
@@ -96,15 +96,16 @@ void Session::handleEvent(const int theEventId)
         isInitializedM = true;
     }
 
-    LOG_DEBUG(getSessionName() 
-            << "[" << getSessionId() << "] handleEvent("
-            << getEventName(theEventId) << ")");
     State& curState = getCurState();
+    LOG_DEBUG(getSessionName() 
+            << "[" << getSessionId() << "] " << curState.getName() << " handleEvent("
+            << getEventName(theEventId) << ")");
+
     ActionList& actionList = curState.getActionList(theEventId);
     if (actionList.empty())
     {
         LOG_ERROR(getSessionName()
-                << "[" << getSessionId() << "]"
+                << "[" << getSessionId() << "] " << curState.getName()
                 << " the Event " << theEventId << " is not defined"
                 << " under state:" << curState.getName());
         changeState(this, endStateIdM);
@@ -118,7 +119,8 @@ void Session::handleEvent(const int theEventId)
         if (curStateId != curStateIdM)
         {
             LOG_DEBUG(getSessionName()
-                    << " state changed, ignore rest action for event:" << theEventId);
+                << "[" << getSessionId() << "] " << curState.getName()
+                << " state changed, ignore rest action for event:" << theEventId);
             break;
         }
         Action action = *it;
@@ -131,13 +133,13 @@ void Session::handleEvent(const int theEventId)
 
 State& Session::toNextState(const int theNextStateId)
 {
-    //const std::string& preStateName = fsmM->getState(curStateIdM).getName();
+    const std::string& preStateName = fsmM->getState(curStateIdM).getName();
 
     curStateIdM = theNextStateId;
     State& nextState = fsmM->getState(curStateIdM);
 
-    //LOG_DEBUG( getSessionName() << "[" << sessionIdM << "] " 
-    //        << preStateName << " -> " << nextState.getName());
+    LOG_DEBUG( getSessionName() << "[" << sessionIdM << "] " 
+            << preStateName << " -> " << nextState.getName());
 
     return nextState;
 }

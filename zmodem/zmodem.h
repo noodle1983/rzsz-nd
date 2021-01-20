@@ -1,6 +1,7 @@
 #ifndef ZMODEM_H
 #define ZMODEM_H
 
+#include <stdint.h>
 /******************************
  *macro
  *****************************/
@@ -163,14 +164,14 @@ typedef struct hex_tag hex_t;
 struct frame_tag{
     unsigned char type;
     unsigned char flag[4];
-    unsigned short crc;
+    uint16_t crc;
 };
 typedef struct frame_tag frame_t;
 
 struct frame32_tag{
     unsigned char type;
     unsigned char flag[4];
-	unsigned long crc;
+	uint32_t crc;
 };
 typedef struct frame32_tag frame32_t;
 
@@ -195,10 +196,19 @@ unsigned char decHex(const hex_str_t *h);
 void encHex(const unsigned char c, hex_str_t *h);
 void convHex2Plain(const hex_t *hexframe, frame_t* frame);
 void convPlain2Hex(const frame_t* frame, hex_t *hexframe);
-unsigned short calcFrameCrc(const frame_t *frame);
-unsigned long calcFrameCrc32(const frame32_t *frame);
-unsigned long calcBufferCrc32(const char *buf, const unsigned len);
+uint16_t calcFrameCrc(const frame_t *frame);
+uint32_t calcFrameCrc32(const frame32_t *frame);
+uint32_t calcBufferCrc32(const char *buf, const unsigned len);
 unsigned getPos(frame_t* frame);
+const char* getTypeStr(unsigned char type);
+
+/**
+ * only support termios.(https://tldp.org/LDP/lpg/node143.html)
+ */
+#include <termios.h>
+#include <unistd.h>
+void set_tty_raw_mode(int fd);
+void reset_tty(int fd);
 
 #endif /* ZMODEM_H */
 

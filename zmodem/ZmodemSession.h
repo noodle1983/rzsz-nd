@@ -24,15 +24,15 @@ public:
 	{
 		IDLE_STATE = 1,
 		CHK_FRAME_TYPE_STATE,
-		PARSE_HEX_STATE,
-		PARSE_BIN_STATE,
-		PARSE_BIN32_STATE,
-		HANDLE_FRAME_STATE,
+        HANDLE_ZFILE_RSP_STATE,
 		WAIT_DATA_STATE,
 		FILE_SELECTED_STATE,
 		SEND_ZDATA_STATE,
+		FILE_COMPLETED_STATE,
 		SEND_FLOW_CTRL_STATE,
-        SEND_FILE_STATE,
+        SEND_ZRQINIT_STATE,
+		SEND_ZFILE_STATE,
+        CHECK_POS_STATE,
 		DESTROY_STATE,
 		END_STATE
 	};
@@ -49,7 +49,7 @@ public:
 		SEND_ZDATA_EVT,
 		SEND_ZDATA_LATER_EVT,
 		DESTROY_EVT,
-		NEXT_EVT,
+		SKIP_EVT,
 		CHECK_FRAME_TYPE_EVT,
 		SEND_FILE_EVT,
 	};
@@ -64,6 +64,9 @@ public:
 	ZmodemSession(Fsm::FiniteStateMachine* fsm);
 	virtual ~ZmodemSession();
 	void initState();
+    void startInputTimer();
+    void stopInputTimer();
+    static void onInputTimerout(void *arg);
 	int processNetworkInput(const char* const str, const int len);
 	void reset();
 	void destroy();
@@ -96,6 +99,10 @@ public:
 	void sendFileInfo();
 
 	static void deleteSelf(Fsm::Session* session);
+	static void parseFrame(Fsm::Session* session);
+	static void sendZFIN(Fsm::Session* session);
+	static void sendOO(Fsm::Session* session);
+	static void sendZDATA(Fsm::Session* session);
 
 	const char* curBuffer(){return buffer_.c_str()+decodeIndex_;}
 	void eatBuffer(){
@@ -105,7 +112,6 @@ public:
 		decodeIndex_=0;
 	}
 
-	bool isDoingRz(){return (getCurState().getId() !=  IDLE_STATE) || bufferParsed_;};
 	int lengthToBeDecode(){return buffer_.length() - decodeIndex_;};
 	const char* bufferToBeDecode(){return buffer_.c_str() + decodeIndex_;}
 
@@ -137,7 +143,7 @@ public:
 		memcpy(&ret, crc_buffer, sizeof(ReturnStruct));
 		return true;
 	}
-private:
+protected:
 	void output(const char* str, ...);
 	bool isToDelete(){return isDestroyed_;}
 	void setDelete(){isDestroyed_ = true;}
@@ -150,7 +156,6 @@ private:
 	unsigned long dataCrc_;
 	int recv_len_;
 	bool lastEscaped_;
-	bool bufferParsed_;
 	bool isDestroyed_;
 
 	bool sendFinOnReset_;
@@ -159,6 +164,7 @@ private:
 	FileSelectState file_select_state_;
 
     ZmodemFile* zmodemFile_;
+    min_heap_item_t* inputTimerM;
 
 	uint64_t tick_;
 };
