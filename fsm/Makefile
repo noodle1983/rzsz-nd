@@ -8,7 +8,7 @@ SUBDIR= .\
 #########################################
 #      header and lib dependancy        #
 #########################################
-INC_DIR= -I. \
+INC_DIR= -I. -I.. \
 
 STATIC_LIB= \
 
