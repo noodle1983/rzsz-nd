@@ -47,13 +47,11 @@ ZmodemFile::ZmodemFile(
 	const std::string& dir, 
 	const std::string& filename, 
 	const std::string& fileinfo)
-	: filename_(filename),
-	file_size_(0),
-	file_time_(0),
-	pos_(0),
-	prompt_("->")
+	: fileNameM(filename),
+	fileSizeM(0),
+	fileTimeM(0),
+	posM(0)
 {
-	prompt_ += filename + ":";
 	parseInfo(fileinfo);
 
 	std::string full_path = dir + "/" + filename;
@@ -69,17 +67,17 @@ ZmodemFile::~ZmodemFile()
 
 bool ZmodemFile::write(const char* buf, unsigned long long len)
 {
-	if (!file_.is_open() || len + pos_ > file_size_){
+	if (!file_.is_open() || len + posM > fileSizeM){
 		return 0;
 	}
 	file_.write(buf, len);
-	pos_ += len;
+	posM += len;
 	return 1;
 }
 
 unsigned long long ZmodemFile::getPos()
 {
-	return pos_;
+	return posM;
 }
 
 bool ZmodemFile::parseInfo(const std::string& fileinfo)
@@ -87,21 +85,19 @@ bool ZmodemFile::parseInfo(const std::string& fileinfo)
 	unsigned st_mode = 0;
 	int file_left = 0;
 	unsigned long  left_total = 0;
-	file_size_ = 0;
-	file_time_ = 0;
-	sscanf(fileinfo.c_str(), "%llu %llo %o 0 %d %ld", &file_size_, &file_time_, &st_mode, &file_left, &left_total);
+	fileSizeM = 0;
+	fileTimeM = 0;
+	sscanf(fileinfo.c_str(), "%llu %llo %o 0 %d %ld", &fileSizeM, &fileTimeM, &st_mode, &file_left, &left_total);
 	return 1;
 }
 
 ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& basename, unsigned long long filesize, unsigned long long filetime)
 	: file_(filepath.c_str(), std::fstream::in|std::fstream::binary),
-	filename_(filepath),
-	file_size_(filesize),
-	file_time_(filetime),
-	pos_(0),
-	prompt_("<-")
+	fileNameM(filepath),
+	fileSizeM(filesize),
+	fileTimeM(filetime),
+	posM(0)
 {
-	prompt_ += basename + ":";
 }
 
 unsigned ZmodemFile::read(char*buf, unsigned size)
@@ -110,24 +106,16 @@ unsigned ZmodemFile::read(char*buf, unsigned size)
 		return 0;
 	file_.read(buf, size);
 	unsigned rlen = file_.gcount();
-	pos_ += rlen;
+	posM += rlen;
 	return rlen;
 }
 
 void ZmodemFile::setPos(unsigned long long pos)
 {
-	if (pos > file_size_)
+	if (pos > fileSizeM)
 		return;
 
 	file_.seekg(pos);
-	pos_ = pos;
+	posM = pos;
 }
-
-std::string ZmodemFile::getProgressLine()
-{
-	char buf[128] = {0};
-	snprintf(buf, sizeof(buf), " %lld/%lld(%d%%)", pos_, file_size_, file_size_ ? int(1.0*100*pos_/file_size_) : 100);
-	return prompt_ + buf;
-}
-
 

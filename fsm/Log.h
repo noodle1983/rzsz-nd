@@ -16,7 +16,7 @@ public:
         outM.open("zmodem.log");
     }
 
-    std::ofstream& stream(const char* level_str, const char* file, const unsigned lineno){
+    std::ofstream& stream(const char* levelStr, const char* file, const unsigned lineno){
         time_t rawTime;
         struct tm info;
         char timeStr[80];
@@ -25,7 +25,7 @@ public:
         localtime_r(&rawTime, &info);
         strftime(timeStr, 80, "%Y-%m-%d %H:%M:%S ", &info);
 
-        outM << timeStr << level_str;// << "(" << file << ":" << lineno << ")";
+        outM << timeStr << levelStr;// << "(" << file << ":" << lineno << ")";
         return outM;
     }
 

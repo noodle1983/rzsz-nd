@@ -104,16 +104,16 @@ public:
 	static void sendOO(Fsm::Session* session);
 	static void sendZDATA(Fsm::Session* session);
 
-	const char* curBuffer(){return buffer_.c_str()+decodeIndex_;}
+	const char* curBuffer(){return bufferM.c_str()+decodeIndexM;}
 	void eatBuffer(){
-		buffer_ = buffer_.substr(decodeIndex_);
-		lastCheckExcaped_ = (lastCheckExcaped_ >= decodeIndex_) ? (lastCheckExcaped_ - decodeIndex_) : 0;
-		lastCheckExcapedSaved_ = (lastCheckExcapedSaved_ >= decodeIndex_) ? (lastCheckExcapedSaved_ - decodeIndex_) : 0;
-		decodeIndex_=0;
+		bufferM = bufferM.substr(decodeIndexM);
+		lastCheckExcapedM = (lastCheckExcapedM >= decodeIndexM) ? (lastCheckExcapedM - decodeIndexM) : 0;
+		lastCheckExcapedSavedM = (lastCheckExcapedSavedM >= decodeIndexM) ? (lastCheckExcapedSavedM - decodeIndexM) : 0;
+		decodeIndexM=0;
 	}
 
-	int lengthToBeDecode(){return buffer_.length() - decodeIndex_;};
-	const char* bufferToBeDecode(){return buffer_.c_str() + decodeIndex_;}
+	int lengthToBeDecode(){return bufferM.length() - decodeIndexM;};
+	const char* bufferToBeDecode(){return bufferM.c_str() + decodeIndexM;}
 
 	template<typename ReturnStruct>
 	bool decodeEscapeStruct(const int index, int& consume_len, ReturnStruct& ret)
@@ -121,17 +121,17 @@ public:
 		consume_len = 0;
 		char crc_buffer[sizeof(ReturnStruct)] = {0};
 		unsigned i, j;
-		for (i = index, j = 0; j < sizeof(ReturnStruct) && i < buffer_.length(); i++, j++){
-			if (buffer_[i] == ZDLE){
-				if (i + 1 < buffer_.length()){
-					crc_buffer[j] = buffer_[i+1] ^ 0x40;
+		for (i = index, j = 0; j < sizeof(ReturnStruct) && i < bufferM.length(); i++, j++){
+			if (bufferM[i] == ZDLE){
+				if (i + 1 < bufferM.length()){
+					crc_buffer[j] = bufferM[i+1] ^ 0x40;
 					i++;
 					consume_len += 2;
 				}else{
 					break;
 				}
 			}else{
-				crc_buffer[j] = buffer_[i];
+				crc_buffer[j] = bufferM[i];
 				consume_len ++;
 			}
 		}
@@ -145,28 +145,26 @@ public:
 	}
 protected:
 	void output(const char* str, ...);
-	bool isToDelete(){return isDestroyed_;}
-	void setDelete(){isDestroyed_ = true;}
+	bool isToDelete(){return isDestroyedM;}
+	void setDelete(){isDestroyedM = true;}
 	
-	frame_t* inputFrame_;
-	std::string buffer_;
-	unsigned decodeIndex_;
-	unsigned lastCheckExcaped_;
-	unsigned lastCheckExcapedSaved_;
-	unsigned long dataCrc_;
-	int recv_len_;
-	bool lastEscaped_;
-	bool isDestroyed_;
+	frame_t* inputFrameM;
+	std::string bufferM;
+	unsigned decodeIndexM;
+	unsigned lastCheckExcapedM;
+	unsigned lastCheckExcapedSavedM;
+	unsigned long dataCrcM;
+	int recvLenM;
+	bool lastEscapedM;
+	bool isDestroyedM;
 
-	bool sendFinOnReset_;
-	bool isSz_;
-	unsigned char zsendline_tab[256];
-	FileSelectState file_select_state_;
+	bool sendFinOnResetM;
+	bool isSzM;
 
-    ZmodemFile* zmodemFile_;
+    ZmodemFile* zmodemFileM;
     min_heap_item_t* inputTimerM;
 
-	uint64_t tick_;
+    int versionM;
 };
 
 #endif /* ZMODEM_SESSION_H */

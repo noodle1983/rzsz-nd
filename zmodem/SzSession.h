@@ -18,8 +18,7 @@ public:
     static void handleZfileRsp(Fsm::Session* session);
 
 private:
-    std::vector<ZmodemFile*> files_;
-    int version_;
+    std::vector<ZmodemFile*> filesM;
 };
 
 #endif /* ZMODEM_SESSION_H */

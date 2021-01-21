@@ -115,7 +115,7 @@ const char* getTypeStr(unsigned char type)
 }
 
 struct termios oldtty, tty;
-void set_tty_raw_mode(int fd){
+void setTtyRawMode(int fd){
     tcgetattr(fd, &oldtty);
     tty = oldtty;
 
@@ -134,11 +134,41 @@ void set_tty_raw_mode(int fd){
     tcsetattr(fd,TCSADRAIN,&tty);
 }
 
-void reset_tty(int fd){
+void resetTty(int fd){
     tcdrain(fd); /* wait until everything is sent */
     tcflush(fd,TCIOFLUSH); /* flush input queue */
     tcsetattr(fd,TCSADRAIN,&oldtty);
     tcflow(fd,TCOON); /* restart output */
 }
 
+unsigned char zsendline_tab[256];
+void initZmodemTab() {
+	int i;
+	for (i=0;i<256;i++) {	
+		if (i & 0140){
+			zsendline_tab[i]=0;
+		}else {
+			switch(i)
+			{
+			case ZDLE:
+			case XOFF: /* ^Q */
+			case XON: /* ^S */
+			case (XOFF | 0200):
+			case (XON | 0200):
+				zsendline_tab[i]=1;
+				break;
+			case 020: /* ^P */
+			case 0220:
+				zsendline_tab[i]=1;
+				break;
+			case 015:
+			case 0215:
+				zsendline_tab[i]=0;
+				break;
+			default:
+				zsendline_tab[i]=0;
+			}
+		}
+	}
+}
 

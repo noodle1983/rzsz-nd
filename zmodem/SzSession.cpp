@@ -87,21 +87,19 @@ Fsm::FiniteStateMachine* SzSession::getZmodemFsm()
 
 SzSession::SzSession()
 	: ZmodemSession(getZmodemFsm())
-    , version_(0)
 {
 }
 
 //-----------------------------------------------------------------------------
 
-SzSession::~SzSession()
-{
+SzSession::~SzSession(){
 }
 
 //-----------------------------------------------------------------------------
 
 void SzSession::sz(std::vector<ZmodemFile*>& files)
 {
-    files_.insert(files_.end(), files.begin(), files.end());
+    filesM.insert(filesM.end(), files.begin(), files.end());
     if (curStateIdM == IDLE_STATE){
         asynHandleEvent(SEND_FILE_EVT);
     }
@@ -120,7 +118,7 @@ void SzSession::sendLeadingMsg(Fsm::Session* session)
 void SzSession::sendZrqinit(Fsm::Session* session)
 {
     SzSession* self = (SzSession*)session;
-    if(self->files_.empty()){
+    if(self->filesM.empty()){
         self->asynHandleEvent(DESTROY_EVT);
         return;
     }
@@ -140,28 +138,28 @@ void SzSession::sendZrqinit(Fsm::Session* session)
 void SzSession::sendZfile(Fsm::Session* session)
 {
     SzSession* self = (SzSession*)session;
-	if (self->inputFrame_->type != ZRINIT || self->files_.size() == 0){
+	if (self->inputFrameM->type != ZRINIT || self->filesM.size() == 0){
         self->asynHandleEvent(DESTROY_EVT);
         return;
     }
     
-	if (self->zmodemFile_){
-		delete self->zmodemFile_;
-		self->zmodemFile_ = NULL;
+	if (self->zmodemFileM){
+		delete self->zmodemFileM;
+		self->zmodemFileM = NULL;
 	}
-    self->zmodemFile_ = self->files_.back();
-    self->files_.pop_back();
+    self->zmodemFileM = self->filesM.back();
+    self->filesM.pop_back();
 
-    const std::string& basename = self->zmodemFile_->getFilename();
+    const std::string& basename = self->zmodemFileM->getFilename();
 	char filedata[1024] = {0};
 	unsigned filedata_len = 0;
 	memcpy(filedata + filedata_len, basename.c_str(), basename.length());
 	filedata_len += basename.length();
 	filedata[filedata_len++] = 0;
 	snprintf(filedata + filedata_len, sizeof(filedata_len) - filedata_len, "%llu %lo 100644 0 1 %llu", 
-		self->zmodemFile_->getFileSize(),
-        (long)self->zmodemFile_->getFileTime(),
-        self->zmodemFile_->getFileSize());
+		self->zmodemFileM->getFileSize(),
+        (long)self->zmodemFileM->getFileTime(),
+        self->zmodemFileM->getFileSize());
 	filedata_len += strlen(filedata + filedata_len);
 	filedata[filedata_len++] = 0;
 
@@ -182,21 +180,21 @@ void SzSession::sendZfile(Fsm::Session* session)
 void SzSession::handleZfileRsp(Fsm::Session* session)
 {
     SzSession* self = (SzSession*)session;
-    if (self->inputFrame_->type == ZSKIP){
+    if (self->inputFrameM->type == ZSKIP){
         self->asynHandleEvent(SKIP_EVT);
         return;
     }
-	if (self->inputFrame_->type != ZRPOS || self->zmodemFile_ == NULL){
+	if (self->inputFrameM->type != ZRPOS || self->zmodemFileM == NULL){
         self->asynHandleEvent(DESTROY_EVT);
         return;
     }
 
-    uint64_t pos = getPos(self->inputFrame_);
+    uint64_t pos = getPos(self->inputFrameM);
     LOG_INFO(self->getSessionName() 
         << "[" << self->getSessionId() << "] " << self->getCurState().getName() << " "
         << "got ZRPOS:" << pos);
 
-    self->zmodemFile_->setPos(pos);
+    self->zmodemFileM->setPos(pos);
     self->sendBin32FrameHeader(ZDATA, pos);
     self->asynHandleEvent(SEND_ZDATA_EVT);
 }

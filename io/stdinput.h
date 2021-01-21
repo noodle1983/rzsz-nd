@@ -19,6 +19,7 @@ namespace nd
             , bufferM(20) // 1MB
             , stopM(false)
         {
+            initZmodemTab();
             setvbuf(stdin, NULL, _IONBF, 0);
             fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
             processorM.start();

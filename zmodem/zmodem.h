@@ -207,8 +207,11 @@ const char* getTypeStr(unsigned char type);
  */
 #include <termios.h>
 #include <unistd.h>
-void set_tty_raw_mode(int fd);
-void reset_tty(int fd);
+void setTtyRawMode(int fd);
+void resetTty(int fd);
+
+extern unsigned char zsendline_tab[256];
+void initZmodemTab();
 
 #endif /* ZMODEM_H */
 

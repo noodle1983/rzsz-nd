@@ -16,12 +16,10 @@ public:
 
 	bool write(const char* buf, unsigned long long len);
 	unsigned long long getPos();
-	unsigned long long getFileSize(){return file_size_;}
-	unsigned long long getFileTime(){return file_time_;}
-	bool isCompleted(){return pos_ == file_size_;}
-	const std::string& getFilename(){return filename_;}
-	const std::string& getPrompt(){return prompt_;}
-	std::string getProgressLine();
+	unsigned long long getFileSize(){return fileSizeM;}
+	unsigned long long getFileTime(){return fileTimeM;}
+	bool isCompleted(){return posM == fileSizeM;}
+	const std::string& getFilename(){return fileNameM;}
 
 	ZmodemFile(const std::string& filepath,
             const std::string& basename,
@@ -36,11 +34,10 @@ private:
 	bool parseInfo(const std::string& fileinfo);
 
 	std::fstream file_;
-	std::string filename_;
-	unsigned long long file_size_;
-	unsigned long long file_time_;
-	unsigned long long pos_;
-	std::string prompt_;
+	std::string fileNameM;
+	unsigned long long fileSizeM;
+	unsigned long long fileTimeM;
+	unsigned long long posM;
 
 };
 
