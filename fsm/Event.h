@@ -3,12 +3,12 @@
 
 #include "Action.h"
 
-//#define FSM_EVENT(ID, ACTION) Fsm::Event((#ID), (ID), Fsm::Action(ACTION))
-typedef void (Fsm::Session::* SessionFunc)();
-#define FSM_EVT_S(ID, ACTION, ...) Fsm::Event((#ID), (ID), FSM_BIND((SessionFunc)ACTION, _1, ##__VA_ARGS__))
-#define FSM_EVENT(ID, ACTION, ...) Fsm::Event((#ID), (ID), FSM_BIND(ACTION, _1, ##__VA_ARGS__))
+//#define FSM_EVENT(ID, ACTION) nd::Event((#ID), (ID), nd::Action(ACTION))
+typedef void (nd::Session::* SessionFunc)();
+#define FSM_EVT_S(ID, ACTION, ...) nd::Event((#ID), (ID), FSM_BIND((SessionFunc)ACTION, _1, ##__VA_ARGS__))
+#define FSM_EVENT(ID, ACTION, ...) nd::Event((#ID), (ID), FSM_BIND(ACTION, _1, ##__VA_ARGS__))
 
-namespace Fsm
+namespace nd
 {
     class Event
     {

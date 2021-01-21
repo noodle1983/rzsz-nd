@@ -9,12 +9,12 @@
 
 //-----------------------------------------------------------------------------
 
-static std::shared_ptr<Fsm::FiniteStateMachine> g_sz_fsm;
-Fsm::FiniteStateMachine* SzSession::getZmodemFsm()
+static std::shared_ptr<nd::FiniteStateMachine> g_sz_fsm;
+nd::FiniteStateMachine* SzSession::getZmodemFsm()
 {
     if (NULL == g_sz_fsm.get())
     {
-        Fsm::FiniteStateMachine* fsm = new Fsm::FiniteStateMachine;
+        nd::FiniteStateMachine* fsm = new nd::FiniteStateMachine;
         (*fsm) += FSM_STATE(IDLE_STATE);
         (*fsm) +=      FSM_EVT_S(ENTRY_EVT,      &ZmodemSession::initState);
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,      NEW_TIMER(1000));
@@ -107,7 +107,7 @@ void SzSession::sz(std::vector<ZmodemFile*>& files)
 
 //-----------------------------------------------------------------------------
 
-void SzSession::sendLeadingMsg(Fsm::Session* session)
+void SzSession::sendLeadingMsg(nd::Session* session)
 {
     const char* msg = "rz\r";
     send_data(msg, strlen(msg));
@@ -115,7 +115,7 @@ void SzSession::sendLeadingMsg(Fsm::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void SzSession::sendZrqinit(Fsm::Session* session)
+void SzSession::sendZrqinit(nd::Session* session)
 {
     SzSession* self = (SzSession*)session;
     if(self->filesM.empty()){
@@ -135,7 +135,7 @@ void SzSession::sendZrqinit(Fsm::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void SzSession::sendZfile(Fsm::Session* session)
+void SzSession::sendZfile(nd::Session* session)
 {
     SzSession* self = (SzSession*)session;
 	if (self->inputFrameM->type != ZRINIT || self->filesM.size() == 0){
@@ -177,7 +177,7 @@ void SzSession::sendZfile(Fsm::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void SzSession::handleZfileRsp(Fsm::Session* session)
+void SzSession::handleZfileRsp(nd::Session* session)
 {
     SzSession* self = (SzSession*)session;
     if (self->inputFrameM->type == ZSKIP){

@@ -17,7 +17,7 @@
 struct frame_tag;
 typedef struct frame_tag frame_t;
 
-class ZmodemSession: public Fsm::Session
+class ZmodemSession: public nd::Session
 {
 public:
 	enum MyState
@@ -61,7 +61,7 @@ public:
 
 	enum FileSelectState{FILE_SELECT_NONE = 0, FILE_SELECTED, FILE_SELECTING};
 
-	ZmodemSession(Fsm::FiniteStateMachine* fsm);
+	ZmodemSession(nd::FiniteStateMachine* fsm);
 	virtual ~ZmodemSession();
 	void initState();
     void startInputTimer();
@@ -98,11 +98,11 @@ public:
 	void onSentTimeout();
 	void sendFileInfo();
 
-	static void deleteSelf(Fsm::Session* session);
-	static void parseFrame(Fsm::Session* session);
-	static void sendZFIN(Fsm::Session* session);
-	static void sendOO(Fsm::Session* session);
-	static void sendZDATA(Fsm::Session* session);
+	static void deleteSelf(nd::Session* session);
+	static void parseFrame(nd::Session* session);
+	static void sendZFIN(nd::Session* session);
+	static void sendOO(nd::Session* session);
+	static void sendZDATA(nd::Session* session);
 
 	const char* curBuffer(){return bufferM.c_str()+decodeIndexM;}
 	void eatBuffer(){

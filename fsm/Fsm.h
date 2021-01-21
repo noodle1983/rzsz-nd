@@ -5,7 +5,7 @@
 #include "Log.h"
 #include <map>
 
-namespace Fsm
+namespace nd
 {
     class FiniteStateMachine
     {

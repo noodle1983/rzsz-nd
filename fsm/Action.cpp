@@ -4,11 +4,11 @@
 
 #include <string>
 
-using namespace Fsm;
+using namespace nd;
 //-----------------------------------------------------------------------------
 
-void Fsm::changeState(
-        Fsm::Session* theSession,
+void nd::changeState(
+        nd::Session* theSession,
         const int theNextStateId)
 {
     //exec EXIT FUNC
@@ -53,8 +53,8 @@ void Fsm::changeState(
 
 //-----------------------------------------------------------------------------
 
-void Fsm::generateEvent(
-        Fsm::Session* theSession,
+void nd::generateEvent(
+        nd::Session* theSession,
         const int theEventId)
 {
     theSession->handleEvent(theEventId);
@@ -62,8 +62,8 @@ void Fsm::generateEvent(
 
 //-----------------------------------------------------------------------------
 
-void Fsm::ignoreEvent(
-        Fsm::Session* theSession)
+void nd::ignoreEvent(
+        nd::Session* theSession)
 {
     State& curState = theSession->getCurState();
     LOG_DEBUG(theSession->getSessionName() 
@@ -72,8 +72,8 @@ void Fsm::ignoreEvent(
 }
 
 //-----------------------------------------------------------------------------
-void Fsm::newTimer(
-        Fsm::Session* theSession,
+void nd::newTimer(
+        nd::Session* theSession,
         const long theMsec)
 {
     theSession->newTimer(theMsec);
@@ -81,25 +81,25 @@ void Fsm::newTimer(
 
 //-----------------------------------------------------------------------------
 
-void Fsm::newFuncTimer(
-		Fsm::Session* theSession,
+void nd::newFuncTimer(
+		nd::Session* theSession,
 		TimerGettor theTimerGettor)
 {
 	long msec = theTimerGettor();
-	return Fsm::newTimer(theSession, msec);
+	return nd::newTimer(theSession, msec);
 }
 
 //-----------------------------------------------------------------------------
-void Fsm::cancelTimer(
-        Fsm::Session* theSession)
+void nd::cancelTimer(
+        nd::Session* theSession)
 {
     theSession->cancelTimer();
 }
 
 //-----------------------------------------------------------------------------
 
-void Fsm::deleteSession(
-        Fsm::Session* theSession)
+void nd::deleteSession(
+        nd::Session* theSession)
 {
     delete theSession;
 }

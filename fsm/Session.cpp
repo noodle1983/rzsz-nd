@@ -3,7 +3,7 @@
 #include <utility>
 #include <Log.h>
 
-using namespace Fsm;
+using namespace nd;
 
 typedef std::pair<Session*, unsigned char> TimerPair;
 //-----------------------------------------------------------------------------

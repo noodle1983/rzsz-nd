@@ -1,6 +1,6 @@
 #include "Fsm.h"
 
-using namespace Fsm;
+using namespace nd;
 //-----------------------------------------------------------------------------
 
 FiniteStateMachine& FiniteStateMachine::operator+=(const State& theState)

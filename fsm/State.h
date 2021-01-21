@@ -8,9 +8,9 @@
 #include <Event.h>
 #include <Action.h>
 
-#define FSM_STATE(ID) Fsm::State((#ID), (ID))
+#define FSM_STATE(ID) nd::State((#ID), (ID))
 
-namespace Fsm
+namespace nd
 {
     typedef std::list<Action> ActionList;
     class State

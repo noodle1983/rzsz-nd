@@ -8,8 +8,8 @@
 
 //-----------------------------------------------------------------------------
 
-ZmodemSession::ZmodemSession(Fsm::FiniteStateMachine* fsm)
-	: Fsm::Session(fsm, 0)
+ZmodemSession::ZmodemSession(nd::FiniteStateMachine* fsm)
+	: nd::Session(fsm, 0)
 	, lastEscapedM(false)
 	, isDestroyedM(false)
     , zmodemFileM(NULL)
@@ -790,7 +790,7 @@ void ZmodemSession::destroy()
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::deleteSelf(Fsm::Session* session)
+void ZmodemSession::deleteSelf(nd::Session* session)
 {
     resetTty(0);
     delete session;
@@ -799,7 +799,7 @@ void ZmodemSession::deleteSelf(Fsm::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::parseFrame(Fsm::Session* session)
+void ZmodemSession::parseFrame(nd::Session* session)
 {
     ZmodemSession* self = (ZmodemSession*)session;
     self->checkFrametype();
@@ -807,7 +807,7 @@ void ZmodemSession::parseFrame(Fsm::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendZFIN(Fsm::Session* session)
+void ZmodemSession::sendZFIN(nd::Session* session)
 {
     ZmodemSession* self = (ZmodemSession*)session;
     frame_t frame;
@@ -818,7 +818,7 @@ void ZmodemSession::sendZFIN(Fsm::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendOO(Fsm::Session* session)
+void ZmodemSession::sendOO(nd::Session* session)
 {
     ZmodemSession* self = (ZmodemSession*)session;
 	if (self->inputFrameM->type != ZFIN){
@@ -832,7 +832,7 @@ void ZmodemSession::sendOO(Fsm::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendZDATA(Fsm::Session* session)
+void ZmodemSession::sendZDATA(nd::Session* session)
 {
     ZmodemSession* self = (ZmodemSession*)session;
     self->sendZdata();

@@ -6,16 +6,16 @@
 class SzSession: public ZmodemSession
 {
 public:
-    static Fsm::FiniteStateMachine* getZmodemFsm();
+    static nd::FiniteStateMachine* getZmodemFsm();
 
 	SzSession();
 	virtual ~SzSession();
     void sz(std::vector<ZmodemFile*>& files);
 
-	static void sendLeadingMsg(Fsm::Session* session);
-	static void sendZrqinit(Fsm::Session* session);
-	static void sendZfile(Fsm::Session* session);
-    static void handleZfileRsp(Fsm::Session* session);
+	static void sendLeadingMsg(nd::Session* session);
+	static void sendZrqinit(nd::Session* session);
+	static void sendZfile(nd::Session* session);
+    static void handleZfileRsp(nd::Session* session);
 
 private:
     std::vector<ZmodemFile*> filesM;
