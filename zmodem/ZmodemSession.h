@@ -28,10 +28,14 @@ public:
 		WAIT_DATA_STATE,
 		FILE_SELECTED_STATE,
 		SEND_ZDATA_STATE,
+		WAIT_ZDATA_STATE,
+		HANDLE_ZDATA_STATE,
 		FILE_COMPLETED_STATE,
 		SEND_FLOW_CTRL_STATE,
         SEND_ZRQINIT_STATE,
+        SEND_ZRINIT_STATE,
 		SEND_ZFILE_STATE,
+        HANDLE_ZFILE_STATE,
         CHECK_POS_STATE,
 		DESTROY_STATE,
 		END_STATE
@@ -102,7 +106,6 @@ public:
 	static void parseFrame(nd::Session* session);
 	static void sendZFIN(nd::Session* session);
 	static void sendOO(nd::Session* session);
-	static void sendZDATA(nd::Session* session);
 
 	const char* curBuffer(){return bufferM.c_str()+decodeIndexM;}
 	void eatBuffer(){

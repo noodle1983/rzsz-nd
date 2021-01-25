@@ -440,6 +440,15 @@ void ZmodemSession::sendZrinit()
 
 void ZmodemSession::handleZfile()
 {
+    if (inputFrameM->type == ZCOMPL){
+        asynHandleEvent(SKIP_EVT);
+        return;
+    }
+	if (inputFrameM->type != ZFILE){
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
+
 	unsigned oldIndex = decodeIndexM;
 	std::string filename(curBuffer());
 	decodeIndexM += filename.length() + 1;
@@ -448,14 +457,12 @@ void ZmodemSession::handleZfile()
 
 	if (decodeIndexM + 6 > bufferM.length()){
 		decodeIndexM = oldIndex;
-        handleEvent(WAIT_DATA_EVT);
-        return ;
+        return;
 	}
 	int crc_len = 0;
 	unsigned long recv_crc = decodeCrc32(decodeIndexM + 2, crc_len);
 	if (crc_len == 0){
 		decodeIndexM = oldIndex;
-		handleEvent(WAIT_DATA_EVT);
         return ;
 	}
 	bufferM[decodeIndexM] = bufferM[decodeIndexM+1];
@@ -480,9 +487,9 @@ void ZmodemSession::handleZfile()
 	if (zmodemFileM)
 		delete zmodemFileM;
 
-	//zmodemFileM = new ZmodemFile(default_output_path, filename, fileinfo);
-
+	zmodemFileM = new ZmodemFile("./", filename, fileinfo);
 	sendFrameHeader(ZRPOS, zmodemFileM->getPos());
+    asynHandleEvent(NEXT_EVT);
 }
 
 //-----------------------------------------------------------------------------
@@ -597,13 +604,17 @@ void ZmodemSession::handleFlowCntl()
 
 void ZmodemSession::handleZdata()
 {
+	if (inputFrameM->type != ZDATA){
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
 	//curBuffer() with len bufferM.length() - decodeIndexM
 	//offset in inputFrameM
 
 	for (; lastCheckExcapedM < bufferM.length() - 1; lastCheckExcapedM++, lastCheckExcapedSavedM++){
 		if (bufferM[lastCheckExcapedM] == ZDLE){
 			if (lastCheckExcapedM + 6 > bufferM.length()){
-				handleEvent(WAIT_DATA_EVT);
+                // wait more data
 				return;
 			}
 			if (ZCRCE == bufferM[lastCheckExcapedM + 1]){
@@ -611,7 +622,7 @@ void ZmodemSession::handleZdata()
 				int consume_len = 0;
 				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
-					handleEvent(WAIT_DATA_EVT);
+                    // wait more data
 					return;
 				}
 
@@ -633,7 +644,7 @@ void ZmodemSession::handleZdata()
 				int consume_len = 0;
 				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
-					handleEvent(WAIT_DATA_EVT);
+                    // wait more data
 					return;
 				}
 
@@ -659,7 +670,7 @@ void ZmodemSession::handleZdata()
 				int consume_len = 0;
 				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
-					handleEvent(WAIT_DATA_EVT);
+                    // wait more date
 					return;
 				}
 
@@ -681,7 +692,7 @@ void ZmodemSession::handleZdata()
 				int consume_len = 0;
 				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
-					handleEvent(WAIT_DATA_EVT);
+                    //wait more data
 					return;
 				}
 
@@ -708,11 +719,7 @@ void ZmodemSession::handleZdata()
 		}
 	}
 	eatBuffer();
-	//zmodemFileM->write(curBuffer(), len);
-	//decodeIndexM += len;
-	//eatBuffer();
-	///recvLenM += len;
-	handleEvent(WAIT_DATA_EVT);
+    // wait more data
 	return;
 }
 
@@ -832,10 +839,4 @@ void ZmodemSession::sendOO(nd::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendZDATA(nd::Session* session)
-{
-    ZmodemSession* self = (ZmodemSession*)session;
-    self->sendZdata();
-}
 
-//-----------------------------------------------------------------------------

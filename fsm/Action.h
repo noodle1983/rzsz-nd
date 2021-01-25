@@ -10,6 +10,7 @@
 #define CANCEL_TIMER()            (&nd::cancelTimer)
 #define DELETE_SESSION()          (&nd::deleteSession)
 #define IGNORE_EVT()              (&nd::ignoreEvent)
+#define SE_FUNC(theType, theFunc) FSM_BIND(nd::wrapSessionFunction<theType>, _1, &theType::theFunc)
 
 namespace nd
 {
@@ -41,6 +42,14 @@ namespace nd
 
     void deleteSession(
             nd::Session* theSession);
+
+    template<typename SessionType>
+    void wrapSessionFunction(
+            nd::Session* theSession,
+            void (SessionType::*func)()){
+        SessionType* self = (SessionType*)theSession;
+        (self->*func)();
+    }
 }
 
 #endif /* ACTION_H */
