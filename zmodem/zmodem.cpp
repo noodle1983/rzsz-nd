@@ -115,8 +115,12 @@ const char* getTypeStr(unsigned char type)
 }
 
 struct termios oldtty, tty;
+bool hasOldTty = false;
 void setTtyRawMode(int fd){
-    tcgetattr(fd, &oldtty);
+    if (!hasOldTty){
+        tcgetattr(fd, &oldtty);
+        hasOldTty = true;
+    }
     tty = oldtty;
 
     tty.c_iflag = IGNBRK | IXOFF;
@@ -135,6 +139,7 @@ void setTtyRawMode(int fd){
 }
 
 void resetTty(int fd){
+    if (!hasOldTty){return;}
     tcdrain(fd); /* wait until everything is sent */
     tcflush(fd,TCIOFLUSH); /* flush input queue */
     tcsetattr(fd,TCSADRAIN,&oldtty);

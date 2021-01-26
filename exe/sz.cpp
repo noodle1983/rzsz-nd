@@ -57,7 +57,8 @@ void parseOption(int argc, char const *argv[]){
 int main(int argc, char const *argv[])
 {
     parseOption(argc, argv);
-    setTtyRawMode(0);
+    setTtyRawMode(STDIN_FILENO);
+    initZmodemTab();
 
     auto session = new SzSession();
     session->startInputTimer();

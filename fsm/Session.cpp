@@ -94,6 +94,7 @@ void Session::handleEvent(const int theEventId)
             }
         }
         isInitializedM = true;
+        if (theEventId == ENTRY_EVT){return;}
     }
 
     State& curState = getCurState();

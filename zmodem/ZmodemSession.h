@@ -89,7 +89,7 @@ public:
 	void sendZdata();
 
 	void checkIfStartRz();
-	void checkFrametype();
+	void parseFrame();
 	void parseHexFrame();
 	void parseBinFrame();
 	void parseBin32Frame();
@@ -101,10 +101,9 @@ public:
 	void sendZrpos();
 	void onSentTimeout();
 	void sendFileInfo();
+	void sendZfin();
 
 	static void deleteSelf(nd::Session* session);
-	static void parseFrame(nd::Session* session);
-	static void sendZFIN(nd::Session* session);
 	static void sendOO(nd::Session* session);
 
 	const char* curBuffer(){return bufferM.c_str()+decodeIndexM;}

@@ -19,10 +19,7 @@ namespace nd
             //, bufferM(20) // 1MB
             //, stopM(false)
         {
-            setTtyRawMode(0);
-            initZmodemTab();
-            setvbuf(stdin, NULL, _IONBF, 0);
-            fcntl(0, F_SETFL, fcntl(0, F_GETFL) | O_NONBLOCK);
+            fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL) | O_NONBLOCK);
             //processorM.start();
             //processorM.process(1, NEW_JOB(std::bind(&StdInput::read, this)));
         }
@@ -38,14 +35,14 @@ namespace nd
             struct timeval timeout;
             timeout.tv_sec = 0;
             timeout.tv_usec = 0;//10*1000;
-            FD_SET(0, &fds);
-            if(select(1, &fds, NULL, NULL, &timeout)<0){
+            FD_SET(STDIN_FILENO, &fds);
+            if(select(STDIN_FILENO + 1, &fds, NULL, NULL, &timeout)<0){
                 LOG_ERROR("select failed! errno:" << errno);
                 return 0;
             }
-            if (!FD_ISSET(0, &fds)){return 0;}
+            if (!FD_ISSET(STDIN_FILENO, &fds)){return 0;}
 
-            int readed = ::read(0, buf, len);
+            int readed = ::read(STDIN_FILENO, buf, len);
             return readed;
         }
 

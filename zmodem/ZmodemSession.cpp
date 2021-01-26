@@ -43,7 +43,7 @@ void ZmodemSession::initState()
 		delete zmodemFileM;
 		zmodemFileM = NULL;
 		if ((!isSzM) && inputFrameM->type == ZFIN){
-			send_data("OO", 2);
+			g_stdout->send_data("OO", 2);
 		}else{
 			frame_t frame;
 			memset(&frame, 0, sizeof(frame_t));
@@ -69,8 +69,14 @@ void ZmodemSession::initState()
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::checkFrametype()
+void ZmodemSession::parseFrame()
 {
+    if (inputFrameM->type == ZFIN && decodeIndexM + 2 >= bufferM.length()
+            && bufferM[decodeIndexM] == 'O' && bufferM[decodeIndexM+1] == 'O'){
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
+
 	for (; decodeIndexM < bufferM.length() 
 		&& ZPAD != bufferM[decodeIndexM] ; decodeIndexM ++);
 	for (; decodeIndexM < bufferM.length() 
@@ -347,7 +353,7 @@ void ZmodemSession::sendFrame(frame_t& frame)
 	if (frame.type != ZFIN && frame.type != ZACK){
 		buf[len++] = XON;
 	}
-    send_data(buf, len);
+    g_stdout->send_data(buf, len);
 }
 //-----------------------------------------------------------------------------
 
@@ -389,7 +395,7 @@ void ZmodemSession::sendBin32Frame(frame32_t& frame)
     len += 4;
 
     len += convert2zline(buf+len, sizeof(buf) -len, (char*)&frame, sizeof(frame));
-    send_data(buf, len);
+    g_stdout->send_data(buf, len);
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "sent Bin32 frame:" << getTypeStr(frame.type));
@@ -448,6 +454,17 @@ void ZmodemSession::handleZfile()
         asynHandleEvent(DESTROY_EVT);
         return;
     }
+
+    if (bufferM.length() - decodeIndexM > 1024){
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
+    int nullCount = 0;
+    for(unsigned i = decodeIndexM; i < bufferM.length(); i++){
+        if (bufferM[i] == 0){nullCount++;}
+        if (nullCount >= 2){break;}
+    }
+    if (nullCount < 2){return;}
 
 	unsigned oldIndex = decodeIndexM;
 	std::string filename(curBuffer());
@@ -511,7 +528,7 @@ void ZmodemSession::send_zsda32(char *buf, size_t length, char frameend)
 	if (frameend == ZCRCW) {
 		send_buf[send_len++] = (XON);  
 	}
-	send_data(send_buf, send_len);
+	g_stdout->send_data(send_buf, send_len);
 }
 
 //-----------------------------------------------------------------------------
@@ -765,7 +782,7 @@ void ZmodemSession::stopInputTimer()
 int ZmodemSession::processNetworkInput(const char* const str, const int len)
 {	
 	bufferM.append(str, len);
-	handleEvent(NETWORK_INPUT_EVT);
+	asynHandleEvent(NETWORK_INPUT_EVT);
 	return 0;
 }
 
@@ -777,7 +794,7 @@ void ZmodemSession::reset()
 	{
 		24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 0
 	};
-	send_data(canistr, strlen(canistr));
+	g_stdout->send_data(canistr, strlen(canistr));
 	handleEvent(RESET_EVT);
 }
 
@@ -806,21 +823,12 @@ void ZmodemSession::deleteSelf(nd::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::parseFrame(nd::Session* session)
+void ZmodemSession::sendZfin()
 {
-    ZmodemSession* self = (ZmodemSession*)session;
-    self->checkFrametype();
-}
-
-//-----------------------------------------------------------------------------
-
-void ZmodemSession::sendZFIN(nd::Session* session)
-{
-    ZmodemSession* self = (ZmodemSession*)session;
     frame_t frame;
     memset(&frame, 0, sizeof(frame_t));
     frame.type = ZFIN;
-    self->sendFrame(frame);
+    sendFrame(frame);
 }
 
 //-----------------------------------------------------------------------------
@@ -833,7 +841,7 @@ void ZmodemSession::sendOO(nd::Session* session)
         return;
     }
     const char* oo = "OO";
-    send_data(oo, strlen(oo));
+    g_stdout->send_data(oo, strlen(oo));
     self->asynHandleEvent(RESET_EVT);
 }
 
