@@ -891,7 +891,13 @@ void ZmodemSession::reset()
 
 void ZmodemSession::output(const char* str, ...)
 {
+    char buffer[1024] = { 0 };
+	va_list ap;
+	va_start(ap, str);
+	vsnprintf(buffer, sizeof(buffer), str, ap);
+	va_end(ap);
 
+    LOG_SE_DEBUG(buffer);
 }
 
 //-----------------------------------------------------------------------------
