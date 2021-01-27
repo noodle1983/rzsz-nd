@@ -22,7 +22,7 @@ nd::FiniteStateMachine* RzSession::getZmodemFsm()
 
         (*fsm) += FSM_STATE(SEND_ZRINIT_STATE);
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(ZmodemSession, sendZrinit));
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(10000));
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(60000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(RESET_EVT,         CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
@@ -55,6 +55,16 @@ nd::FiniteStateMachine* RzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(RESET_EVT,         CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, handleZdata));
+        (*fsm) +=      FSM_EVENT(NEXT_EVT,          CHANGE_STATE(ZEOF_STATE));
+        (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
+
+        (*fsm) += FSM_STATE(ZEOF_STATE);
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(ZmodemSession, parseFrame));
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
+        (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
+        (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
+        (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, parseFrame));
+        (*fsm) +=      FSM_EVENT(HANDLE_FRAME_EVT,  CHANGE_STATE(SEND_ZRINIT_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
         (*fsm) += FSM_STATE(END_STATE);	

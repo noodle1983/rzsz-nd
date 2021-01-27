@@ -51,7 +51,7 @@ void ZmodemSession::initState()
 			sendFrame(frame);
 		}
 
-		output("\r\n");
+		//LOG_SE_ERROR("");
 		if (!isToDelete()) asynHandleEvent(RESET_EVT);
 	}
 	bufferM.clear();
@@ -102,7 +102,7 @@ void ZmodemSession::parseFrame()
         parseBin32Frame();
         return;
 	}else{
-		//output("\r\nonly support(HEX,BIN,BIN32) frame\r\n");
+		//LOG_SE_ERROR("only support(HEX,BIN,BIN32) frame");
 		handleEvent(RESET_EVT);
 		return;
 	}
@@ -121,7 +121,7 @@ void ZmodemSession::parseHexFrame()
 	frame_t frame;
     convHex2Plain(&hexframe, &frame);
     if (frame.crc != calcFrameCrc(&frame)){
-		output("\r\ncrc error!\r\n");
+		LOG_SE_ERROR("crc error!");
         handleEvent(RESET_EVT);
         return ;
     }
@@ -132,12 +132,12 @@ void ZmodemSession::parseHexFrame()
 			|| '\n' == bufferM[decodeIndexM]
 			|| -118 == bufferM[decodeIndexM]) ; decodeIndexM ++);
 	if (old_index == decodeIndexM){
-		output("\r\nno line seed found!\r\n");
+		LOG_SE_ERROR("no line seed found!");
         handleEvent(RESET_EVT);
         return ;
     }
 	if (frame.type != ZACK && frame.type != ZFIN && bufferM[decodeIndexM++] != XON){
-		output("\r\nXON expected!\r\n");
+		LOG_SE_ERROR("XON expected!");
         handleEvent(RESET_EVT);
         return ;
     }
@@ -164,7 +164,7 @@ void ZmodemSession::parseBinFrame()
 	decodeIndexM += frame_len;
 
     if (frame.crc != calcFrameCrc(&frame)){
-		output("\r\nbin crc error!\r\n");
+		LOG_SE_ERROR("bin crc error!");
         handleEvent(RESET_EVT);
         return ;
     }
@@ -191,7 +191,7 @@ void ZmodemSession::parseBin32Frame()
 	decodeIndexM += frame_len;
 
     if (frame.crc != calcFrameCrc32(&frame)){
-		output("\r\nbin32 crc error!\r\n");
+		LOG_SE_ERROR("bin32 crc error!");
         handleEvent(RESET_EVT);
         return ;
     }
@@ -239,7 +239,7 @@ void ZmodemSession::handleFrame()
 				return;
 			}
 			unsigned pos = getPos(inputFrameM);
-			output("\r\nremote set pos to %d\r\n", pos);
+			output("remote set pos to %d", pos);
 			zmodemFileM->setPos(pos);
 			sendBin32FrameHeader(ZDATA, zmodemFileM->getPos());
 			sendZdata();
@@ -251,43 +251,43 @@ void ZmodemSession::handleFrame()
 		}
 		return;
     case ZSINIT:
-		output("\r\nunexpected frame type:ZSINIT\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZSINIT");
 		break;
     case ZACK:
-		output("\r\nunexpected frame type:ZACK\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZACK");
 		break;
     case ZSKIP:
-		output("\r\nunexpected frame type:ZSKIP. no permission to write file?\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZSKIP. no permission to write file?");
 		break;
     case ZABORT:
-		output("\r\nunexpected frame type:ZABORT\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZABORT");
 		break;
     case ZFERR:
-		output("\r\nunexpected frame type:ZFERR\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZFERR");
 		break;
     case ZCRC:
-		output("\r\nunexpected frame type:ZCRC\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZCRC");
 		break;
     case ZCHALLENGE:
-		output("\r\nunexpected frame type:ZCHALLENGE\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZCHALLENGE");
 		break;
     case ZCOMPL:
-		output("\r\nunexpected frame type:ZCOMPL\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZCOMPL");
 		break;
     case ZCAN:
-		output("\r\nunexpected frame type:ZCAN\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZCAN");
 		break;
     case ZFREECNT:
-		output("\r\nunexpected frame type:ZFREECNT\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZFREECNT");
 		break;
     case ZCOMMAND:
-		output("\r\nunexpected frame type:ZCOMMAND\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZCOMMAND");
 		break;
     case ZSTDERR:
-		output("\r\nunexpected frame type:ZSTDERR\r\n");
+		LOG_SE_ERROR("unexpected frame type:ZSTDERR");
 		break;
     default:
-        output("\r\ninvalid frame type!\r\n");
+        LOG_SE_ERROR("invalid frame type!");
         break;
 
 
@@ -328,7 +328,7 @@ void ZmodemSession::sendZdata()
 void ZmodemSession::onSentTimeout()
 {
 	if (!zmodemFileM->isGood()) {
-		//output(".");
+		//LOG_SE_ERROR(".");
 		newTimer(1000);
 	}
 
@@ -400,6 +400,7 @@ void ZmodemSession::sendBin32Frame(frame32_t& frame)
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "sent Bin32 frame:" << getTypeStr(frame.type));
 }
+
 //-----------------------------------------------------------------------------
 
 unsigned ZmodemSession::convert2zline(char* dest, const unsigned dest_size, 
@@ -433,6 +434,108 @@ unsigned ZmodemSession::convert2zline(char* dest, const unsigned dest_size,
 
 //-----------------------------------------------------------------------------
 
+int ZmodemSession::parseZdata()
+{
+	//curBuffer() with len bufferM.length() - decodeIndexM
+	//offset in inputFrameM
+
+	for (; lastCheckExcapedM < bufferM.length() - 1; lastCheckExcapedM++, lastCheckExcapedSavedM++){
+		if (bufferM[lastCheckExcapedM] == ZDLE){
+			if (lastCheckExcapedM + 6 > bufferM.length()){
+                // wait more data
+				return 0;
+			}
+			if (ZCRCE == bufferM[lastCheckExcapedM + 1]){
+				uint32_t calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
+				int consume_len = 0;
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				if (consume_len == 0){
+                    // wait more data
+					return 0;
+				}
+
+				if (calc_crc == recv_crc){
+					lastCheckExcapedM += 2 + consume_len;
+					dataCrcM = 0xFFFFFFFFL;
+					
+					return ZCRCE;
+				}
+                else{
+                    LOG_SE_ERROR("ZCRCE crc error!");
+                    return -1;
+                }
+			}else if (ZCRCG == bufferM[lastCheckExcapedM + 1]){	
+				uint32_t calc_crc = ~UPDC32((unsigned char)(bufferM[lastCheckExcapedM+1]), dataCrcM);
+				int consume_len = 0;
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				if (consume_len == 0){
+                    // wait more data
+					return 0;
+				}
+
+				if (calc_crc == recv_crc){
+					assert(lastCheckExcapedSavedM- decodeIndexM == 1024);
+					lastCheckExcapedM += 2 + consume_len;
+					dataCrcM = 0xFFFFFFFFL;
+
+					return ZCRCG;
+				}else {
+                    LOG_SE_ERROR("ZCRCG crc error!");
+                    return -1;
+				}
+				//else it is normal char
+
+			}else if (ZCRCQ == bufferM[lastCheckExcapedM + 1]){
+				uint32_t calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
+				int consume_len = 0;
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				if (consume_len == 0){
+                    // wait more date
+					return 0;
+				}
+
+				if (calc_crc == recv_crc){
+					lastCheckExcapedM += 2 + consume_len;
+					dataCrcM = 0xFFFFFFFFL;
+					sendFrameHeader(ZACK, zmodemFileM->getPos());
+					return ZCRCQ;
+				}else {
+                    LOG_SE_ERROR("ZCRCQ crc error!");
+                    return -1;
+				}
+
+			}else if (ZCRCW == bufferM[lastCheckExcapedM + 1]){
+				uint32_t calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
+				int consume_len = 0;
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				if (consume_len == 0){
+                    //wait more data
+					return 0;
+				}
+
+				if (calc_crc == recv_crc){
+					lastCheckExcapedM += 2 + consume_len;
+					dataCrcM = 0xFFFFFFFFL;
+					return ZCRCW;
+				}else {
+                    LOG_SE_ERROR("ZCRCW crc error!");
+                    return -1;
+				}
+			}else{
+				lastCheckExcapedM++;
+				bufferM[lastCheckExcapedSavedM] = bufferM[lastCheckExcapedM] ^ 0x40;
+				dataCrcM = UPDC32((unsigned char)(bufferM[lastCheckExcapedSavedM]), dataCrcM);
+			}
+		}else{
+			bufferM[lastCheckExcapedSavedM] = bufferM[lastCheckExcapedM] ;
+			dataCrcM = UPDC32((unsigned char)(bufferM[lastCheckExcapedSavedM]), dataCrcM);
+		}
+	}
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+
 void ZmodemSession::sendZrinit()
 {
 	frame_t frame;
@@ -459,6 +562,14 @@ void ZmodemSession::handleZfile()
         asynHandleEvent(DESTROY_EVT);
         return;
     }
+
+    int ret = parseZdata();
+    if (ret == 0) {return;}
+    if (ret < 0) {
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
+
     int nullCount = 0;
     for(unsigned i = decodeIndexM; i < bufferM.length(); i++){
         if (bufferM[i] == 0){nullCount++;}
@@ -466,38 +577,16 @@ void ZmodemSession::handleZfile()
     }
     if (nullCount < 2){return;}
 
-	unsigned oldIndex = decodeIndexM;
 	std::string filename(curBuffer());
 	decodeIndexM += filename.length() + 1;
 	std::string fileinfo(curBuffer());
 	decodeIndexM += fileinfo.length() + 1;
 
-	if (decodeIndexM + 6 > bufferM.length()){
-		decodeIndexM = oldIndex;
-        return;
-	}
-	int crc_len = 0;
-	unsigned long recv_crc = decodeCrc32(decodeIndexM + 2, crc_len);
-	if (crc_len == 0){
-		decodeIndexM = oldIndex;
-        return ;
-	}
-	bufferM[decodeIndexM] = bufferM[decodeIndexM+1];
-	decodeIndexM++;
-	unsigned long crc = calcBufferCrc32(bufferM.c_str() + oldIndex, decodeIndexM - oldIndex);
-
-	decodeIndexM++;
-	decodeIndexM += crc_len;
+	decodeIndexM = lastCheckExcapedM;//crc len
 	if (*curBuffer() == XON){
 		decodeIndexM++;
 	}
 
-	if (recv_crc != crc){
-		output("\r\nzfile frame crc invalid!\r\n");
-		sendFinOnResetM = true;
-        handleEvent(RESET_EVT);
-        return ;
-	}
 	eatBuffer();
 	recvLenM = 0;
 
@@ -515,7 +604,7 @@ void ZmodemSession::send_zsda32(char *buf, size_t length, char frameend)
 {
 	char send_buf[2048+128];
 	size_t send_len = 0;
-	unsigned long crc;
+	uint32_t crc;
 
 	send_len = convert2zline(send_buf, sizeof(send_buf), buf, length);
 	send_buf[send_len++] = ZDLE;
@@ -540,13 +629,13 @@ void ZmodemSession::sendFileInfo()
 	//bool res = GetFileInfo(uploadFilePath_, &info);
 	//std::string basename(W2A(uploadFilePath_.BaseName().value().c_str()));
 	//if (res == false){
-	//	std::string out(std::string("can't get info of file:") + basename + "\r\n");
-	//	output(out.c_str());
+	//	std::string out(std::string("can't get info of file:") + basename + "");
+	//	LOG_SE_ERROR(out.c_str());
 	//	handleEvent(RESET_EVT);
 	//	return;
 	//}
 	//if (info.size >= 0x100000000) {
-	//	output("\r\nThe file size[%llu] is larger than %lu(max in 4 bytes defined in zmodem)!\r\n", info.size, 0xFFFFFFFF);
+	//	LOG_SE_ERROR("The file size[%llu] is larger than %lu(max in 4 bytes defined in zmodem)!", info.size, 0xFFFFFFFF);
 	//	handleEvent(RESET_EVT);
 	//	return;
 	//}
@@ -577,19 +666,19 @@ void ZmodemSession::sendFileInfo()
 }
 //-----------------------------------------------------------------------------
 
-unsigned short ZmodemSession::decodeCrc(const int index, int& consume_len)
+uint16_t ZmodemSession::decodeCrc(const int index, int& consume_len)
 {
-	unsigned short ret = 0;
-	decodeEscapeStruct<unsigned short>(index, consume_len, ret);
+	uint16_t ret = 0;
+	decodeEscapeStruct<uint16_t>(index, consume_len, ret);
 	return ret;
 }
 
 //-----------------------------------------------------------------------------
 
-unsigned long ZmodemSession::decodeCrc32(const int index, int& consume_len)
+uint32_t ZmodemSession::decodeCrc32(const int index, int& consume_len)
 {
-	unsigned long ret = 0;
-	decodeEscapeStruct<unsigned long>(index, consume_len, ret);
+	uint32_t ret = 0;
+	decodeEscapeStruct<uint32_t>(index, consume_len, ret);
 	return ret;
 }
 //-----------------------------------------------------------------------------
@@ -635,9 +724,9 @@ void ZmodemSession::handleZdata()
 				return;
 			}
 			if (ZCRCE == bufferM[lastCheckExcapedM + 1]){
-				unsigned long calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
+				uint32_t calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
 				int consume_len = 0;
-				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
                     // wait more data
 					return;
@@ -653,13 +742,13 @@ void ZmodemSession::handleZdata()
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
 					
-					handleEvent(NETWORK_INPUT_EVT);
+					handleEvent(NEXT_EVT);
 					return;
 				}
 			}else if (ZCRCG == bufferM[lastCheckExcapedM + 1]){	
-				unsigned long calc_crc = ~UPDC32((unsigned char)(bufferM[lastCheckExcapedM+1]), dataCrcM);
+				uint32_t calc_crc = ~UPDC32((unsigned char)(bufferM[lastCheckExcapedM+1]), dataCrcM);
 				int consume_len = 0;
-				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
                     // wait more data
 					return;
@@ -683,9 +772,9 @@ void ZmodemSession::handleZdata()
 				//else it is normal char
 
 			}else if (ZCRCQ == bufferM[lastCheckExcapedM + 1]){
-				unsigned long calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
+				uint32_t calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
 				int consume_len = 0;
-				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
                     // wait more date
 					return;
@@ -700,14 +789,14 @@ void ZmodemSession::handleZdata()
 					lastCheckExcapedSavedM = lastCheckExcapedM;
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
-					sendFrameHeader(ZNAK, zmodemFileM->getPos());
+					sendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
 				}
 
 			}else if (ZCRCW == bufferM[lastCheckExcapedM + 1]){
-				unsigned long calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
+				uint32_t calc_crc = ~UPDC32(bufferM[lastCheckExcapedM+1], dataCrcM);
 				int consume_len = 0;
-				unsigned long recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
+				uint32_t recv_crc = decodeCrc32(lastCheckExcapedM+2, consume_len);
 				if (consume_len == 0){
                     //wait more data
 					return;
@@ -722,7 +811,7 @@ void ZmodemSession::handleZdata()
 					lastCheckExcapedSavedM = lastCheckExcapedM;
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
-					sendFrameHeader(ZNAK, zmodemFileM->getPos());
+					sendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
 				}
 			}else{
@@ -802,6 +891,7 @@ void ZmodemSession::reset()
 
 void ZmodemSession::output(const char* str, ...)
 {
+
 }
 
 //-----------------------------------------------------------------------------

@@ -30,6 +30,7 @@ public:
 		SEND_ZDATA_STATE,
 		WAIT_ZDATA_STATE,
 		HANDLE_ZDATA_STATE,
+		ZEOF_STATE,
 		FILE_COMPLETED_STATE,
 		SEND_FLOW_CTRL_STATE,
         SEND_ZRQINIT_STATE,
@@ -76,8 +77,8 @@ public:
 	void destroy();
 
 	size_t dataCrcMatched(const size_t begin);
-	unsigned short decodeCrc(const int index, int& consume_len);
-	unsigned long decodeCrc32(const int index, int& consume_len);
+	uint16_t decodeCrc(const int index, int& consume_len);
+	uint32_t decodeCrc32(const int index, int& consume_len);
 	void sendFrameHeader(unsigned char type, long pos);
 	void sendFrame(frame_t& frame);
 	
@@ -149,13 +150,14 @@ protected:
 	void output(const char* str, ...);
 	bool isToDelete(){return isDestroyedM;}
 	void setDelete(){isDestroyedM = true;}
+    int parseZdata();
 	
 	frame_t* inputFrameM;
 	std::string bufferM;
 	unsigned decodeIndexM;
 	unsigned lastCheckExcapedM;
 	unsigned lastCheckExcapedSavedM;
-	unsigned long dataCrcM;
+	uint32_t dataCrcM;
 	int recvLenM;
 	bool lastEscapedM;
 	bool isDestroyedM;

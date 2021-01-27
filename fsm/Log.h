@@ -55,4 +55,11 @@ private:
 #define LOG_ERROR(msg) LOG("ERR   ", true, msg)
 #define LOG_FATAL(msg) LOG("FATAL ", true, msg)
 
+#define LOG_SE_TRACE(msg) LOG("TRACE ", false, getSessionName() << "[" << getSessionId() << "] " << getCurState().getName() << " " << msg)
+#define LOG_SE_DEBUG(msg) LOG("DEBUG ", false, getSessionName() << "[" << getSessionId() << "] " << getCurState().getName() << " " << msg)
+#define LOG_SE_INFO(msg)  LOG("INFO  ", false, getSessionName() << "[" << getSessionId() << "] " << getCurState().getName() << " " << msg)
+#define LOG_SE_WARN(msg)  LOG("WARN  ", false, getSessionName() << "[" << getSessionId() << "] " << getCurState().getName() << " " << msg)
+#define LOG_SE_ERROR(msg) LOG("ERR   ", true,  getSessionName() << "[" << getSessionId() << "] " << getCurState().getName() << " " << msg)
+#define LOG_SE_FATAL(msg) LOG("FATAL ", true,  getSessionName() << "[" << getSessionId() << "] " << getCurState().getName() << " " << msg)
+
 #endif
