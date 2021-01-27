@@ -19,13 +19,8 @@ void parseOption(int argc, char const *argv[]){
 	try {
         TCLAP::CmdLine cmd("Receive file(s) with ZMODEM protocol.", ' ', "0.1");
 
-        TCLAP::ValueArg<unsigned> debugArg("d", "debug", "show debug messages", false, 0,"int:0-1");
-        cmd.add(debugArg);
-
+        g_options->addCommonOptions(cmd);
         cmd.parse( argc, argv );
-
-        g_options->debugLevel = debugArg.getValue();
-
 	} catch (TCLAP::ArgException &e)
 	{ 
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
