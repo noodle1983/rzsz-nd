@@ -81,6 +81,8 @@ DEPENDFILES=$(patsubst %.o, %.d, $(OBJECTS))
 DEPENDTARGET=$(patsubst %.d, %.d.tmp, $(DEPENDFILES))
 TESTDEPENDFILES=$(patsubst %.o, %.d, $(TESTOBJECTS))
 TESTDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(TESTDEPENDFILES))
+EXEDEPENDFILES=$(patsubst %.o, %.d, $(EXEOBJECTS))
+EXEDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(EXEDEPENDFILES))
 
 #########################################
 #               Rules                   #
@@ -88,14 +90,14 @@ TESTDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(TESTDEPENDFILES))
 all:$(TARGET) $(EXETARGET)
 test:$(TESTTARGET)
 
-$(STATIC_TARGET):$(AUTOTARGET) depend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
+$(STATIC_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
 	@if [ "" != "$(OBJECTS)" ]; then \
 		echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS)"; \
 		$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS); \
 		echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist ; \
 	fi;
 
-$(SHARED_TARGET):$(AUTOTARGET) depend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
+$(SHARED_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
 	$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(SHARED_TARGET) $(OBJECTS)
 	@echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist
 
@@ -134,6 +136,7 @@ $(SYMBOL_OUTDIR):$(OUTDIR_PREFIX)
 
 -include $(DEPENDFILES)
 -include $(TESTDEPENDFILES)
+-include $(EXEDEPENDFILES)
 $(OUTDIR)/%.d.tmp:%.cpp
 	@echo "building dependancy for $<..."
 	@set -e; rm -f $@ $(OUTDIR)/$*.d; \
@@ -166,11 +169,12 @@ dependdir:
 
 depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDTARGET)
 testdepend: $(OUTDIR) $(TESTOUTSUBDIR) $(TESTDEPENDTARGET)
+exedepend: $(OUTDIR) $(EXEOUTSUBDIR) $(EXEDEPENDTARGET)
 
 
 FORCE:
 
-.PHONY:clean depend test testdepend dependdir
+.PHONY:clean depend exedepend test testdepend dependdir
 clean:
 	@rm -rf $(OUTDIR) $(AUTOTARGET) \
 		$(OUTDIR_PREFIX)/$(MOD_NAME).objectlist \
