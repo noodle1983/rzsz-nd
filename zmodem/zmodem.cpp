@@ -1,7 +1,11 @@
 #include "zmodem.h"
 #include "crctab.h"
+#include "Log.h"
 
 #include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/select.h>
 
 int hex2int(char hex)
 {
@@ -194,5 +198,22 @@ void initZmodemTab() {
 			}
 		}
 	}
+}
+
+void waitUntilWritable(int fd){
+    while(true){
+        fd_set fds;
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 10*1000;
+        FD_SET(fd, &fds);
+        if(select(fd + 1, NULL, &fds, NULL, &timeout)<0){
+            LOG_ERROR("stdout select failed! errno:" << errno);
+            return;
+        }
+        if (!FD_ISSET(fd, &fds)){continue;}
+
+        return;
+    }
 }
 

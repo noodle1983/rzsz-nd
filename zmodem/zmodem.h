@@ -213,5 +213,7 @@ void resetTty();
 extern unsigned char zsendline_tab[256];
 void initZmodemTab();
 
+void waitUntilWritable(int fd);
+
 #endif /* ZMODEM_H */
 

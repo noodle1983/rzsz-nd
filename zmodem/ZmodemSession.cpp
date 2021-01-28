@@ -53,8 +53,8 @@ void ZmodemSession::initState()
 		//LOG_SE_ERROR("");
 		if (!isToDelete()) asynHandleEvent(RESET_EVT);
 	}
-	bufferM.clear();
-	bufferM.reserve(1024 * 16);
+    bufferLenM = 0;
+    memset(bufferM, 0, sizeof(bufferM));
 	decodeIndexM = 0;
 	lastCheckExcapedM = 0;
 	lastCheckExcapedSavedM = 0;
@@ -70,18 +70,18 @@ void ZmodemSession::initState()
 
 void ZmodemSession::parseFrame()
 {
-    if (inputFrameM->type == ZFIN && decodeIndexM + 2 >= bufferM.length()
+    if (inputFrameM->type == ZFIN && decodeIndexM + 2 >= bufferLenM
             && bufferM[decodeIndexM] == 'O' && bufferM[decodeIndexM+1] == 'O'){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
 
-	for (; decodeIndexM < bufferM.length() 
+	for (; decodeIndexM < bufferLenM 
 		&& ZPAD != bufferM[decodeIndexM] ; decodeIndexM ++);
-	for (; decodeIndexM < bufferM.length() 
+	for (; decodeIndexM < bufferLenM 
 		&& ZPAD == bufferM[decodeIndexM] ; decodeIndexM ++);
 
-	if (decodeIndexM + 2 >= bufferM.length()){
+	if (decodeIndexM + 2 >= bufferLenM){
 		return;
 	}
 
@@ -111,7 +111,7 @@ void ZmodemSession::parseFrame()
 
 void ZmodemSession::parseHexFrame()
 {
-	if (decodeIndexM + sizeof(hex_t) >= bufferM.length())
+	if (decodeIndexM + sizeof(hex_t) >= bufferLenM)
 		return;
 	hex_t  hexframe;
 	memcpy(&hexframe, curBuffer(), sizeof(hex_t));
@@ -126,7 +126,7 @@ void ZmodemSession::parseHexFrame()
     }
 
 	unsigned old_index = decodeIndexM;
-	for (; decodeIndexM < bufferM.length() 
+	for (; decodeIndexM < bufferLenM 
 		&& ('\r' == bufferM[decodeIndexM] 
 			|| '\n' == bufferM[decodeIndexM]
 			|| -118 == bufferM[decodeIndexM]) ; decodeIndexM ++);
@@ -153,7 +153,7 @@ void ZmodemSession::parseHexFrame()
 
 void ZmodemSession::parseBinFrame()
 {
-	if (decodeIndexM + sizeof(frame_t) >= bufferM.length())
+	if (decodeIndexM + sizeof(frame_t) >= bufferLenM)
 		return;
 	frame_t frame;
 	int frame_len = 0;
@@ -180,7 +180,7 @@ void ZmodemSession::parseBinFrame()
 
 void ZmodemSession::parseBin32Frame()
 {
-	if (decodeIndexM + sizeof(frame32_t) > bufferM.length())
+	if (decodeIndexM + sizeof(frame32_t) > bufferLenM)
 		return;
 	frame32_t frame;
 	int frame_len = 0;
@@ -245,7 +245,7 @@ void ZmodemSession::handleFrame()
 		}
 		return;
     case ZNAK:
-		if (decodeIndexM < bufferM.length()){
+		if (decodeIndexM < bufferLenM){
 			handleEvent(NETWORK_INPUT_EVT);
 		}
 		return;
@@ -435,12 +435,12 @@ unsigned ZmodemSession::convert2zline(char* dest, const unsigned dest_size,
 
 int ZmodemSession::parseZdata()
 {
-	//curBuffer() with len bufferM.length() - decodeIndexM
+	//curBuffer() with len bufferLenM - decodeIndexM
 	//offset in inputFrameM
 
-	for (; lastCheckExcapedM + 1 < bufferM.length(); lastCheckExcapedM++, lastCheckExcapedSavedM++){
+	for (; lastCheckExcapedM + 1 < bufferLenM; lastCheckExcapedM++, lastCheckExcapedSavedM++){
 		if (bufferM[lastCheckExcapedM] == ZDLE){
-			if (lastCheckExcapedM + 6 > bufferM.length()){
+			if (lastCheckExcapedM + 6 > bufferLenM){
                 // wait more data
 				return 0;
 			}
@@ -479,7 +479,6 @@ int ZmodemSession::parseZdata()
 
 					return ZCRCG;
 				}else {
-                    LOG_SE_ERROR("ZCRCG crc error!");
                     return -1;
 				}
 				//else it is normal char
@@ -557,7 +556,7 @@ void ZmodemSession::handleZfile()
         return;
     }
 
-    if (bufferM.length() - decodeIndexM > 1024){
+    if (bufferLenM - decodeIndexM > 1024){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
@@ -570,7 +569,7 @@ void ZmodemSession::handleZfile()
     }
 
     int nullCount = 0;
-    for(unsigned i = decodeIndexM; i < bufferM.length(); i++){
+    for(unsigned i = decodeIndexM; i < bufferLenM; i++){
         if (bufferM[i] == 0){nullCount++;}
         if (nullCount >= 2){break;}
     }
@@ -684,7 +683,7 @@ uint32_t ZmodemSession::decodeCrc32(const int index, int& consume_len)
 
 void ZmodemSession::handleFlowCntl()
 {
-	while (decodeIndexM < bufferM.length())
+	while (decodeIndexM < bufferLenM)
 	{
 		char code = bufferM[decodeIndexM];
 		if (code == XOFF) {
@@ -713,12 +712,12 @@ void ZmodemSession::handleZdata()
         asynHandleEvent(DESTROY_EVT);
         return;
     }
-	//curBuffer() with len bufferM.length() - decodeIndexM
+	//curBuffer() with len bufferLenM - decodeIndexM
 	//offset in inputFrameM
 
-	for (; lastCheckExcapedM + 1 < bufferM.length(); lastCheckExcapedM++, lastCheckExcapedSavedM++){
+	for (; lastCheckExcapedM + 1 < bufferLenM; lastCheckExcapedM++, lastCheckExcapedSavedM++){
 		if (bufferM[lastCheckExcapedM] == ZDLE){
-			if (lastCheckExcapedM + 6 > bufferM.length()){
+			if (lastCheckExcapedM + 6 > bufferLenM){
                 // wait more data
 				return;
 			}
@@ -741,6 +740,7 @@ void ZmodemSession::handleZdata()
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
 					
+                    eatBuffer();
 					handleEvent(NEXT_EVT);
 					return;
 				}
@@ -754,7 +754,7 @@ void ZmodemSession::handleZdata()
 				}
 
 				if (calc_crc == recv_crc){
-					assert(lastCheckExcapedSavedM- decodeIndexM == 1024);
+					assert(lastCheckExcapedSavedM - decodeIndexM == 1024);
 					lastCheckExcapedM += 1 + consume_len;
 					if (!zmodemFileM->write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM)){
 						handleEvent(RESET_EVT);
@@ -762,9 +762,12 @@ void ZmodemSession::handleZdata()
 					}
 					lastCheckExcapedSavedM = lastCheckExcapedM;
 					decodeIndexM = lastCheckExcapedM+1;
+                    eatBuffer();
 					dataCrcM = 0xFFFFFFFFL;
-					continue;
+                    asynHandleEvent(NETWORK_INPUT_EVT);
+                    return;
 				}else {
+                    LOG_SE_ERROR("ZCRCG crc error! at len:" << (lastCheckExcapedSavedM - decodeIndexM));
 					handleEvent(RESET_EVT);
 					return;
 				}
@@ -788,6 +791,7 @@ void ZmodemSession::handleZdata()
 					lastCheckExcapedSavedM = lastCheckExcapedM;
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
+                    eatBuffer();
 					sendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
 				}
@@ -810,6 +814,7 @@ void ZmodemSession::handleZdata()
 					lastCheckExcapedSavedM = lastCheckExcapedM;
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
+                    eatBuffer();
 					sendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
 				}
@@ -841,9 +846,16 @@ void ZmodemSession::onInputTimerout(void *arg)
 {
     ZmodemSession* self = (ZmodemSession*)arg;
     char buffer[1024] = {0};
+
+    if (sizeof(self->bufferM) - self->bufferLenM < sizeof(buffer)){
+        self->processNetworkInput(buffer, 0);
+        self->inputTimerM = NULL;
+        self->startInputTimer();
+        return;
+    }
     
     int len = 0;
-    while((len = g_stdin->getInput(buffer, sizeof(buffer))) > 0)
+    while((sizeof(self->bufferM) - self->bufferLenM > sizeof(buffer)) && (len = g_stdin->getInput(buffer, sizeof(buffer))) > 0)
     {
         self->processNetworkInput(buffer, len);
     }
@@ -869,7 +881,10 @@ void ZmodemSession::stopInputTimer()
 
 int ZmodemSession::processNetworkInput(const char* const str, const int len)
 {	
-	bufferM.append(str, len);
+    if (len > 0){
+        memcpy(bufferM + bufferLenM, str, len);
+        bufferLenM += len;
+    }
 	asynHandleEvent(NETWORK_INPUT_EVT);
 	return 0;
 }

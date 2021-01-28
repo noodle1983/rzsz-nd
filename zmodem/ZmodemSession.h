@@ -107,16 +107,18 @@ public:
 	static void deleteSelf(nd::Session* session);
 	static void sendOO(nd::Session* session);
 
-	const char* curBuffer(){return bufferM.c_str()+decodeIndexM;}
+	const char* curBuffer(){return bufferM + decodeIndexM;}
 	void eatBuffer(){
-		bufferM = bufferM.substr(decodeIndexM);
+        bufferLenM -= decodeIndexM;
+        for(unsigned i = 0; i < bufferLenM; i++){ bufferM[i] = bufferM[decodeIndexM + i];}
+        memset(bufferM + bufferLenM, 0, sizeof(bufferM) - bufferLenM);
 		lastCheckExcapedM = (lastCheckExcapedM >= decodeIndexM) ? (lastCheckExcapedM - decodeIndexM) : 0;
 		lastCheckExcapedSavedM = (lastCheckExcapedSavedM >= decodeIndexM) ? (lastCheckExcapedSavedM - decodeIndexM) : 0;
 		decodeIndexM=0;
 	}
 
-	int lengthToBeDecode(){return bufferM.length() - decodeIndexM;};
-	const char* bufferToBeDecode(){return bufferM.c_str() + decodeIndexM;}
+	int lengthToBeDecode(){return bufferLenM - decodeIndexM;};
+	const char* bufferToBeDecode(){return bufferM + decodeIndexM;}
 
 	template<typename ReturnStruct>
 	bool decodeEscapeStruct(const int index, int& consume_len, ReturnStruct& ret)
@@ -124,9 +126,9 @@ public:
 		consume_len = 0;
 		char crc_buffer[sizeof(ReturnStruct)] = {0};
 		unsigned i, j;
-		for (i = index, j = 0; j < sizeof(ReturnStruct) && i < bufferM.length(); i++, j++){
+		for (i = index, j = 0; j < sizeof(ReturnStruct) && i < bufferLenM; i++, j++){
 			if (bufferM[i] == ZDLE){
-				if (i + 1 < bufferM.length()){
+				if (i + 1 < bufferLenM){
 					crc_buffer[j] = bufferM[i+1] ^ 0x40;
 					i++;
 					consume_len += 2;
@@ -151,7 +153,8 @@ protected:
     int parseZdata();
 	
 	frame_t* inputFrameM;
-	std::string bufferM;
+	char bufferM[1024*16];
+	unsigned bufferLenM;
 	unsigned decodeIndexM;
 	unsigned lastCheckExcapedM;
 	unsigned lastCheckExcapedSavedM;

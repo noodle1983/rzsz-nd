@@ -3,6 +3,7 @@
 
 #include "Singleton.hpp"
 #include "Log.h"
+#include "zmodem.h"
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -19,23 +20,6 @@ namespace nd
         virtual ~StdOutput(){
         }
 
-        void waitUntilWritable(){
-            while(true){
-                fd_set fds;
-                struct timeval timeout;
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 10*1000;
-                FD_SET(STDOUT_FILENO, &fds);
-                if(select(STDOUT_FILENO + 1, NULL, &fds, NULL, &timeout)<0){
-                    LOG_ERROR("stdout select failed! errno:" << errno);
-                    return;
-                }
-                if (!FD_ISSET(STDOUT_FILENO, &fds)){continue;}
-
-                return;
-            }
-        }
-
         void sendData(const char* buffer, const int len)
         {
             int writeIndex = 0;
@@ -47,7 +31,7 @@ namespace nd
                 }
 
                 if (writed != dataLen){
-                    waitUntilWritable();
+                    waitUntilWritable(STDOUT_FILENO);
                 }
             }while(writeIndex < len);
         }

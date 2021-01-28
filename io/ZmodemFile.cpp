@@ -1,4 +1,5 @@
 #include "ZmodemFile.h"
+#include "Log.h"
 #include <stdio.h>
 #include <assert.h>
 #include <sys/stat.h>
@@ -68,9 +69,16 @@ ZmodemFile::~ZmodemFile()
 bool ZmodemFile::write(const char* buf, unsigned long long len)
 {
 	if (!file_.is_open() || len + posM > fileSizeM){
+        LOG_ERROR("write failed! errno:" << errno);
 		return 0;
 	}
-	file_.write(buf, len);
+    long long pos = file_.tellp();
+    file_.write(buf, len);
+	long long written = (long long)file_.tellp() - pos;
+    if (written != (long long)len){
+        LOG_ERROR("write not match. input len:" << len << ", written:" << written);
+		return 0;
+    }
 	posM += len;
 	return 1;
 }
