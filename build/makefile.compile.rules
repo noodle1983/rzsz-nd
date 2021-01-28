@@ -75,7 +75,7 @@ SYMBOL_DIR=symbols
 SYMBOL_OUTDIR=$(OUTDIR_PREFIX)/$(SYMBOL_DIR)
 
 #########################################
-#               Depend                  #
+#               Dependance              #
 #########################################
 DEPENDFILES=$(patsubst %.o, %.d, $(OBJECTS))
 DEPENDTARGET=$(patsubst %.d, %.d.tmp, $(DEPENDFILES))
@@ -85,26 +85,32 @@ EXEDEPENDFILES=$(patsubst %.o, %.d, $(EXEOBJECTS))
 EXEDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(EXEDEPENDFILES))
 
 #########################################
+#           Makefile Dependance         #
+#########################################
+DEPENDMAKEFILES=$(wildcard build/makefile.*)
+
+
+#########################################
 #               Rules                   #
 #########################################
 all:$(TARGET) $(EXETARGET)
 test:$(TESTTARGET)
 
-$(STATIC_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
+$(STATIC_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS) $(DEPENDMAKEFILES)
 	@if [ "" != "$(OBJECTS)" ]; then \
 		echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS)"; \
 		$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS); \
 		echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist ; \
 	fi;
 
-$(SHARED_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS)
+$(SHARED_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS) $(DEPENDMAKEFILES)
 	$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(SHARED_TARGET) $(OBJECTS)
 	@echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist
 
-$(TESTTARGET):$(AUTOTARGET) $(TARGET) testdepend $(TESTOUTSUBDIR) $(TESTOBJECTS) $(TEST_OUTDIR) $(TEST_OUT_FILE) $(SYMBOL_OUTDIR)
+$(TESTTARGET):$(AUTOTARGET) $(TARGET) testdepend $(TESTOUTSUBDIR) $(TESTOBJECTS) $(TEST_OUTDIR) $(TEST_OUT_FILE) $(SYMBOL_OUTDIR) $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) $(OUTDIR)/$(TESTDIR)/$@.o $(OBJECTS) $(LDFLAGS) -o $(TEST_OUTDIR)/$(MOD_NAME)$@
 
-$(EXETARGET):$(AUTOTARGET) $(TARGET) testdepend $(EXEOUTSUBDIR) $(EXEOBJECTS) $(EXE_OUTDIR) $(EXE_OUT_FILE) $(SYMBOL_OUTDIR)
+$(EXETARGET):$(AUTOTARGET) $(TARGET) testdepend $(EXEOUTSUBDIR) $(EXEOBJECTS) $(EXE_OUTDIR) $(EXE_OUT_FILE) $(SYMBOL_OUTDIR) $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 
 $(TEST_OUTDIR)/%:FORCE
@@ -149,10 +155,10 @@ $(OUTDIR)/%.d.tmp:%.c
 	($(cc) $(CXXFLAGS) -MM -c $< > $@ || rm -f $@) &&  \
 	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*.o $@: ,g' <$@ >$(OUTDIR)/$*.d; 
 
-$(OUTDIR)/%.o:%.cpp
+$(OUTDIR)/%.o:%.cpp $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
-$(OUTDIR)/%.o:%.c
+$(OUTDIR)/%.o:%.c $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 AutoMsg/%.h:AutoMsg/%.msg $(PROJBASE)/build/genMsg.pl

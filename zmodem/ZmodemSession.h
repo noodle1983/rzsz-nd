@@ -148,8 +148,6 @@ public:
 	}
 protected:
 	void output(const char* str, ...);
-	bool isToDelete(){return isDestroyedM;}
-	void setDelete(){isDestroyedM = true;}
     int parseZdata();
 	
 	frame_t* inputFrameM;
@@ -160,7 +158,6 @@ protected:
 	uint32_t dataCrcM;
 	int recvLenM;
 	bool lastEscapedM;
-	bool isDestroyedM;
 
 	bool sendFinOnResetM;
 	bool isSzM;

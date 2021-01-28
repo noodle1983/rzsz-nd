@@ -1,6 +1,8 @@
 #include "zmodem.h"
 #include "crctab.h"
 
+#include <signal.h>
+
 int hex2int(char hex)
 {
 	if (hex >= '0' && hex <='9')
@@ -114,12 +116,26 @@ const char* getTypeStr(unsigned char type)
 
 }
 
+void sigHandler(int n)
+{
+    resetTty();
+}
+
 struct termios oldtty, tty;
 bool hasOldTty = false;
-void setTtyRawMode(int fd){
+void setTtyRawMode(){
     if (!hasOldTty){
-        tcgetattr(fd, &oldtty);
+        tcgetattr(STDIN_FILENO, &oldtty);
         hasOldTty = true;
+
+        if (signal(SIGINT, sigHandler) == SIG_IGN)
+            signal(SIGINT, SIG_IGN);
+        else {
+            signal(SIGINT, sigHandler);
+        }
+        signal(SIGTERM, sigHandler);
+        signal(SIGPIPE, sigHandler);
+        signal(SIGHUP, sigHandler);
     }
     tty = oldtty;
 
@@ -135,15 +151,18 @@ void setTtyRawMode(int fd){
     tty.c_cflag |= CS8;
     tty.c_cc[VMIN] = 1; /* This many chars satisfies reads */
     tty.c_cc[VTIME] = 1;    /* or in this many tenths of seconds */
-    tcsetattr(fd,TCSADRAIN,&tty);
+    tcsetattr(STDIN_FILENO,TCSADRAIN,&tty);
 }
 
-void resetTty(int fd){
+void resetTty(){
     if (!hasOldTty){return;}
-    tcdrain(fd); /* wait until everything is sent */
-    tcflush(fd,TCIOFLUSH); /* flush input queue */
-    tcsetattr(fd,TCSADRAIN,&oldtty);
-    tcflow(fd,TCOON); /* restart output */
+
+    tcdrain(STDIN_FILENO); /* wait until everything is sent */
+    tcflush(STDIN_FILENO,TCIOFLUSH); /* flush input queue */
+    tcsetattr(STDIN_FILENO,TCSADRAIN,&oldtty);
+    tcflow(STDIN_FILENO,TCOON); /* restart output */
+
+    hasOldTty = false;
 }
 
 unsigned char zsendline_tab[256];

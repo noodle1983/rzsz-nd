@@ -11,7 +11,6 @@
 ZmodemSession::ZmodemSession(nd::FiniteStateMachine* fsm)
 	: nd::Session(fsm, 0)
 	, lastEscapedM(false)
-	, isDestroyedM(false)
     , zmodemFileM(NULL)
     , inputTimerM(NULL)
     , versionM(0)
@@ -43,7 +42,7 @@ void ZmodemSession::initState()
 		delete zmodemFileM;
 		zmodemFileM = NULL;
 		if ((!isSzM) && inputFrameM->type == ZFIN){
-			g_stdout->send_data("OO", 2);
+			g_stdout->sendData("OO", 2);
 		}else{
 			frame_t frame;
 			memset(&frame, 0, sizeof(frame_t));
@@ -353,7 +352,7 @@ void ZmodemSession::sendFrame(frame_t& frame)
 	if (frame.type != ZFIN && frame.type != ZACK){
 		buf[len++] = XON;
 	}
-    g_stdout->send_data(buf, len);
+    g_stdout->sendData(buf, len);
 }
 //-----------------------------------------------------------------------------
 
@@ -395,7 +394,7 @@ void ZmodemSession::sendBin32Frame(frame32_t& frame)
     len += 4;
 
     len += convert2zline(buf+len, sizeof(buf) -len, (char*)&frame, sizeof(frame));
-    g_stdout->send_data(buf, len);
+    g_stdout->sendData(buf, len);
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "sent Bin32 frame:" << getTypeStr(frame.type));
@@ -439,7 +438,7 @@ int ZmodemSession::parseZdata()
 	//curBuffer() with len bufferM.length() - decodeIndexM
 	//offset in inputFrameM
 
-	for (; lastCheckExcapedM < bufferM.length() - 1; lastCheckExcapedM++, lastCheckExcapedSavedM++){
+	for (; lastCheckExcapedM + 1 < bufferM.length(); lastCheckExcapedM++, lastCheckExcapedSavedM++){
 		if (bufferM[lastCheckExcapedM] == ZDLE){
 			if (lastCheckExcapedM + 6 > bufferM.length()){
                 // wait more data
@@ -617,7 +616,7 @@ void ZmodemSession::send_zsda32(char *buf, size_t length, char frameend)
 	if (frameend == ZCRCW) {
 		send_buf[send_len++] = (XON);  
 	}
-	g_stdout->send_data(send_buf, send_len);
+	g_stdout->sendData(send_buf, send_len);
 }
 
 //-----------------------------------------------------------------------------
@@ -717,7 +716,7 @@ void ZmodemSession::handleZdata()
 	//curBuffer() with len bufferM.length() - decodeIndexM
 	//offset in inputFrameM
 
-	for (; lastCheckExcapedM < bufferM.length() - 1; lastCheckExcapedM++, lastCheckExcapedSavedM++){
+	for (; lastCheckExcapedM + 1 < bufferM.length(); lastCheckExcapedM++, lastCheckExcapedSavedM++){
 		if (bufferM[lastCheckExcapedM] == ZDLE){
 			if (lastCheckExcapedM + 6 > bufferM.length()){
                 // wait more data
@@ -820,7 +819,7 @@ void ZmodemSession::handleZdata()
 				dataCrcM = UPDC32((unsigned char)(bufferM[lastCheckExcapedSavedM]), dataCrcM);
 			}
 		}else{
-			bufferM[lastCheckExcapedSavedM] = bufferM[lastCheckExcapedM] ;
+			bufferM[lastCheckExcapedSavedM] = bufferM[lastCheckExcapedM];
 			dataCrcM = UPDC32((unsigned char)(bufferM[lastCheckExcapedSavedM]), dataCrcM);
 		}
 	}
@@ -883,7 +882,7 @@ void ZmodemSession::reset()
 	{
 		24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 0
 	};
-	g_stdout->send_data(canistr, strlen(canistr));
+	g_stdout->sendData(canistr, strlen(canistr));
 	handleEvent(RESET_EVT);
 }
 
@@ -904,15 +903,15 @@ void ZmodemSession::output(const char* str, ...)
 
 void ZmodemSession::destroy()
 {
-	setDelete();
 	asynHandleEvent(DESTROY_EVT);
+	setDelete();
 }
 
 //-----------------------------------------------------------------------------
 
 void ZmodemSession::deleteSelf(nd::Session* session)
 {
-    resetTty(0);
+    resetTty();
     delete session;
     g_processor->waitStop();
 }
@@ -937,7 +936,7 @@ void ZmodemSession::sendOO(nd::Session* session)
         return;
     }
     const char* oo = "OO";
-    g_stdout->send_data(oo, strlen(oo));
+    g_stdout->sendData(oo, strlen(oo));
     self->asynHandleEvent(RESET_EVT);
 }
 

@@ -68,8 +68,12 @@ namespace nd
             return fsmM->getState(curStateIdM);
         }
 
+        bool isToDelete(){return isDestroyedM;}
+        void setDelete(){isDestroyedM = true;}
+
     protected:
         bool isInitializedM;
+        bool isDestroyedM;
         unsigned char curStateIdM;
         unsigned char endStateIdM;
         unsigned timerIdM;

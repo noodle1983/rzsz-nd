@@ -4,8 +4,8 @@ AR=ar
 RANLIB=ranlib 
 ARFLAGS=rcs
 SHAREDFLAG= -fPIC -shared
-CFLAGs=-DDEBUG -Wall -Wno-class-memaccess -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -g $(INC_DIR)
-CXXFLAGS=-std=gnu++17 $(CFLAGs)
+CFLAGs=-Wall -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -g $(INC_DIR)
+CXXFLAGS=-std=c++17 $(CFLAGs)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)

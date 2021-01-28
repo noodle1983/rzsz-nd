@@ -12,6 +12,7 @@ Session::Session(
         FiniteStateMachine* theFsm, 
         const uint64_t theSessionId)
     : isInitializedM(false)
+    , isDestroyedM(false)
     , curStateIdM(theFsm->getFirstStateId())
     , endStateIdM(theFsm->getLastStateId())
     , timerIdM(0)
@@ -26,6 +27,7 @@ Session::Session(
 
 Session::Session()
     : isInitializedM(false)
+    , isDestroyedM(false)
     , curStateIdM(0)
     , endStateIdM(0)
     , timerIdM(0)
@@ -62,6 +64,8 @@ Session::~Session()
 
 int Session::asynHandleEvent(const int theEventId)
 {
+    if(isToDelete()){return 0;}
+
     ASYN_PROCESS_EVT(&Session::handleEvent, this, theEventId);
     return 0;
 }

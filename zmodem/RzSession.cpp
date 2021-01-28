@@ -36,7 +36,7 @@ nd::FiniteStateMachine* RzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(SKIP_EVT,          CHANGE_STATE(END_STATE));
-        (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, handleZfile));
+        (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, CHANGE_STATE(HANDLE_ZFILE_STATE));
         (*fsm) +=      FSM_EVENT(NEXT_EVT,          CHANGE_STATE(WAIT_ZDATA_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
@@ -54,7 +54,7 @@ nd::FiniteStateMachine* RzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(RESET_EVT,         CHANGE_STATE(END_STATE));
-        (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, handleZdata));
+        (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, CHANGE_STATE(HANDLE_ZDATA_STATE));
         (*fsm) +=      FSM_EVENT(NEXT_EVT,          CHANGE_STATE(ZEOF_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
@@ -105,7 +105,7 @@ RzSession::~RzSession(){
 void RzSession::sendLeadingMsg(nd::Session* session)
 {
     const char* msg = "rz waiting to receive.\r";
-    g_stdout->send_data(msg, strlen(msg));
+    g_stdout->sendData(msg, strlen(msg));
 }
 
 //-----------------------------------------------------------------------------
