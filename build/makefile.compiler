@@ -1,11 +1,14 @@
+PREFIX=/usr/local
 CC=g++
 cc=gcc
 AR=ar
 RANLIB=ranlib 
 ARFLAGS=rcs
 SHAREDFLAG= -fPIC -shared
-CFLAGs=-Wall -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -g $(INC_DIR)
-CXXFLAGS=-std=c++17 $(CFLAGs)
+DEBUG_CFLAGS= -g -fsanitize=address -fno-omit-frame-pointer
+RELEASE_CFLAGS= -O3
+CFLAGS= -Wall -D_FILE_OFFSET_BITS=64 $(INC_DIR)
+CXXFLAGS= -std=c++17 $(CFLAGS)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -14,4 +17,9 @@ endif
 ifeq ($(UNAME_S),Darwin)
 	SHARED_LIB += -lpthread
 endif
-LDFLAGS=$(SHARED_LIB_DIR) $(SHARED_LIB) $(STATIC_LIB) -fsanitize=address -fno-omit-frame-pointer
+DEBUG_LDFLAGS= -fsanitize=address -fno-omit-frame-pointer
+RELEASE_LDFLAGS=
+LDFLAGS= $(SHARED_LIB_DIR) $(SHARED_LIB) $(STATIC_LIB)
+
+DEBUG_SUFFIX=_d
+RELEASE_SUFFIX=

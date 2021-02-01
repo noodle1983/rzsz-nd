@@ -4,128 +4,136 @@
 DIR_LIST=$(subst /, \ , $(CURDIR))
 MOD_NAME=$(word $(words $(DIR_LIST)), $(DIR_LIST))
 
-BIN_TARGET=$(if $(APPDIR), $(MOD_NAME))
-SHARED_TARGET=$(if $(COMPILE_SHARED),lib$(MOD_NAME).so)
-STATIC_TARGET=lib$(MOD_NAME).a
-TARGET = $(BIN_TARGET) $(SHARED_TARGET) $(STATIC_TARGET)
+DEBUG_SHARED_TARGET=$(if $(COMPILE_SHARED),lib$(MOD_NAME)$(DEBUG_SUFFIX).so)
+DEBUG_STATIC_TARGET=lib$(MOD_NAME)$(DEBUG_SUFFIX).a
+DEBUG_TARGET = $(DEBUG_SHARED_TARGET) $(DEBUG_STATIC_TARGET)
+
+RELEASE_SHARED_TARGET=$(if $(COMPILE_SHARED),lib$(MOD_NAME)$(RELEASE_SUFFIX).so)
+RELEASE_STATIC_TARGET=lib$(MOD_NAME)$(RELEASE_SUFFIX).a
+RELEASE_TARGET = $(RELEASE_SHARED_TARGET) $(RELEASE_STATIC_TARGET)
 
 OUTDIR_PREFIX=$(PROJBASE)/.lib
 OUTDIR=$(OUTDIR_PREFIX)/$(MOD_NAME)
-ALL_TARGET = $(addprefix $(OUTDIR_PREFIX)/, $(TARGET))
-#########################################
-#        Auto TARGET                    #
-#########################################
-AUTOMSGDEF=$(wildcard AutoMsg/*.msg) 
-AUTOMSGTARGET=$(patsubst %.msg, %.h, $(AUTOMSGDEF))
-
-TOLUAPKG=$(wildcard LuaObject/*.pkg)
-TOLUACPP=$(patsubst %.pkg, %.cpp, $(TOLUAPKG))
-
-AUTOTARGET= $(AUTOMSGTARGET) $(TOLUACPP)
 
 #########################################
 #               OBJECTS                 #
 #########################################
 CFILES=$(foreach DIR, $(SUBDIR), $(wildcard $(DIR)/*.c))
-CPPFILES=$(foreach DIR, $(SUBDIR), $(wildcard $(DIR)/*.cpp)) \
-        $(TOLUACPP)
+CPPFILES=$(foreach DIR, $(SUBDIR), $(wildcard $(DIR)/*.cpp))
 TMPOBJECTS=$(patsubst %.cpp, %.o, $(CPPFILES)) \
            $(patsubst %.c, %.o, $(CFILES)) 
-OUTSUBDIR=$(addprefix $(OUTDIR)/, $(SUBDIR) \
-    $(if $(TOLUACPP), LuaObject))
+OUTSUBDIR=$(addprefix $(OUTDIR)/, $(SUBDIR))
     
-OBJECTS=$(addprefix $(OUTDIR)/, $(TMPOBJECTS))
-
-#########################################
-#        Test    Target                 #
-#########################################
-TESTDIR=unittest
-TESTCPPFILES=$(foreach DIR, $(TESTDIR), $(wildcard $(DIR)/*.cpp))
-TMPTESTOBJECTS=$(patsubst %.cpp, %.o, $(TESTCPPFILES))
-TESTOUTSUBDIR=$(addprefix $(OUTDIR)/, $(TESTDIR))
-TESTOBJECTS=$(addprefix $(OUTDIR)/, $(TMPTESTOBJECTS))
-TESTTARGET=$(basename $(notdir $(TESTOBJECTS)))
-TEST_OUTDIR=$(OUTDIR_PREFIX)/test
-TEST_FILE=$(foreach DIR, $(TESTDIR), $(wildcard $(DIR)/*.lua) \
-                                     $(wildcard $(DIR)/*.xml) \
-                                     $(wildcard $(DIR)/*.json) \
-                                     $(wildcard $(DIR)/*.pcap))
-TEST_OUT_FILE=$(addprefix $(TEST_OUTDIR)/, $(notdir $(TEST_FILE)))
+TMP_PATH_OBJECTS=$(addprefix $(OUTDIR)/, $(TMPOBJECTS))
+DEBUG_OBJECTS=$(patsubst %.o, %$(DEBUG_SUFFIX).o, $(TMP_PATH_OBJECTS))
+RELEASE_OBJECTS=$(patsubst %.o, %$(RELEASE_SUFFIX).o, $(TMP_PATH_OBJECTS))
 
 #########################################
 #         Exe    Target                 #
 #########################################
 EXEDIR=exe
-EXECPPFILES=$(foreach DIR, $(EXEDIR), $(wildcard $(DIR)/*.cpp))
-TMPEXEOBJECTS=$(patsubst %.cpp, %.o, $(EXECPPFILES))
+EXE_OUTDIR=$(OUTDIR_PREFIX)/$(EXEDIR)
 EXEOUTSUBDIR=$(addprefix $(OUTDIR)/, $(EXEDIR))
-EXEOBJECTS=$(addprefix $(OUTDIR)/, $(TMPEXEOBJECTS))
-EXETARGET=$(basename $(notdir $(EXEOBJECTS)))
-EXE_OUTDIR=$(OUTDIR_PREFIX)/exe
-EXE_FILE=$(foreach DIR, $(EXEDIR), $(wildcard $(DIR)/*.lua) \
-                                     $(wildcard $(DIR)/*.xml) \
-                                     $(wildcard $(DIR)/*.json) \
-                                     $(wildcard $(DIR)/*.pcap))
-EXE_OUT_FILE=$(addprefix $(EXE_OUTDIR)/, $(notdir $(EXE_FILE)))
+EXECPPFILES=$(foreach DIR, $(EXEDIR), $(wildcard $(DIR)/*.cpp))
 
-#########################################
-#          Crash Dump                   #
-#########################################
-SYMBOL_DIR=symbols
-SYMBOL_OUTDIR=$(OUTDIR_PREFIX)/$(SYMBOL_DIR)
+DEBUG_TMPEXEOBJECTS=$(patsubst %.cpp, %$(DEBUG_SUFFIX).o, $(EXECPPFILES))
+DEBUG_EXEOBJECTS=$(addprefix $(OUTDIR)/, $(DEBUG_TMPEXEOBJECTS))
+DEBUG_EXETARGET=$(basename $(notdir $(DEBUG_EXEOBJECTS)))
+DEBUG_TARGET+=$(DEBUG_EXETARGET)
 
+RELEASE_TMPEXEOBJECTS=$(patsubst %.cpp, %$(RELEASE_SUFFIX).o, $(EXECPPFILES))
+RELEASE_EXEOBJECTS=$(addprefix $(OUTDIR)/, $(RELEASE_TMPEXEOBJECTS))
+RELEASE_EXETARGET=$(basename $(notdir $(RELEASE_EXEOBJECTS)))
+RELEASE_TARGET+=$(RELEASE_EXETARGET)
 #########################################
 #               Dependance              #
 #########################################
-DEPENDFILES=$(patsubst %.o, %.d, $(OBJECTS))
-DEPENDTARGET=$(patsubst %.d, %.d.tmp, $(DEPENDFILES))
-TESTDEPENDFILES=$(patsubst %.o, %.d, $(TESTOBJECTS))
-TESTDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(TESTDEPENDFILES))
-EXEDEPENDFILES=$(patsubst %.o, %.d, $(EXEOBJECTS))
-EXEDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(EXEDEPENDFILES))
+DEBUG_DEPENDFILES=$(patsubst %.o, %.d, $(DEBUG_OBJECTS))
+DEBUG_DEPENDTARGET=$(patsubst %.d, %.d.tmp, $(DEBUG_DEPENDFILES))
+DEBUG_EXEDEPENDFILES=$(patsubst %.o, %.d, $(DEBUG_EXEOBJECTS))
+DEBUG_EXEDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(DEBUG_EXEDEPENDFILES))
+
+RELEASE_DEPENDFILES=$(patsubst %.o, %.d, $(RELEASE_OBJECTS))
+RELEASE_DEPENDTARGET=$(patsubst %.d, %.d.tmp, $(RELEASE_DEPENDFILES))
+RELEASE_EXEDEPENDFILES=$(patsubst %.o, %.d, $(RELEASE_EXEOBJECTS))
+RELEASE_EXEDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(RELEASE_EXEDEPENDFILES))
 
 #########################################
 #           Makefile Dependance         #
 #########################################
 DEPENDMAKEFILES=$(wildcard build/makefile.*)
 
+#########################################
+#             FUNCTION                  #
+#########################################
+# $(1): static_target
+# $(2): objects
+define build_static_lib
+    @if [ "$(2)" != "" ]; then \
+        echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2)"; \
+        $(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2); \
+        echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
+    fi
+endef
+
+# $(1): shared_target
+# $(2): objects
+define build_shared_lib
+    @if [ "$(2)" != "" ]; then \
+        echo "$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2)"; \
+        $(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2); \
+        echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
+	fi;
+endef
+
+# $(1): target
+# $(2): source file
+# $(3): target file basename
+# $(4): compile flags
+define build_dependency
+	@echo "building dependancy for $(2)..."
+	@set -e; rm -f $(1) $(OUTDIR)/$(3).d; \
+	($(CC) $(4) -MM -c $(2) > $(1) || rm -f $(1)) &&  \
+	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*.o $(1): ,g' <$(1) >$(OUTDIR)/$(3).d; 
+endef
 
 #########################################
 #               Rules                   #
 #########################################
-all:$(TARGET) $(EXETARGET)
-test:$(TESTTARGET)
+all:SUFFIX=$(RELEASE_SUFFIX)
+all:CFLAGS+=$(RELEASE_CFLAGS)
+all:LDFLAGS+=$(RELEASE_LDFLAGS)
+all:$(RELEASE_TARGET)
+debug:SUFFIX=$(DEBUG_SUFFIX)
+debug:CFLAGS+=$(DEBUG_CFLAGS)
+debug:LDFLAGS+=$(DEBUG_LDFLAGS)
+debug:$(DEBUG_TARGET)
 
-$(STATIC_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS) $(DEPENDMAKEFILES)
-	@if [ "" != "$(OBJECTS)" ]; then \
-		echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS)"; \
-		$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(STATIC_TARGET) $(OBJECTS); \
-		echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist ; \
-	fi;
+$(DEBUG_STATIC_TARGET):debug_depend $(DEBUG_OBJECTS)
+	$(call build_static_lib,$@,$(DEBUG_OBJECTS)) # no blank between ,
 
-$(SHARED_TARGET):$(AUTOTARGET) depend exedepend dependdir $(OUTDIR) $(OUTSUBDIR) $(OBJECTS) $(DEPENDMAKEFILES)
-	$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(SHARED_TARGET) $(OBJECTS)
-	@echo " $(OBJECTS) " > $(OUTDIR_PREFIX)/$(MOD_NAME).objectlist
+$(RELEASE_STATIC_TARGET):release_depend $(RELEASE_OBJECTS)
+	$(call build_static_lib,$@,$(RELEASE_OBJECTS)) # no blank between ,
 
-$(TESTTARGET):$(AUTOTARGET) $(TARGET) testdepend $(TESTOUTSUBDIR) $(TESTOBJECTS) $(TEST_OUTDIR) $(TEST_OUT_FILE) $(SYMBOL_OUTDIR) $(DEPENDMAKEFILES)
-	$(CC) $(CXXFLAGS) $(OUTDIR)/$(TESTDIR)/$@.o $(OBJECTS) $(LDFLAGS) -o $(TEST_OUTDIR)/$(MOD_NAME)$@
+$(DEBUG_SHARED_TARGET):debug_depend $(DEBUG_OBJECTS)
+	$(call build_shared_lib,$@,$(DEBUG_OBJECTS)) # no blank between ,
 
-$(EXETARGET):$(AUTOTARGET) $(TARGET) testdepend $(EXEOUTSUBDIR) $(EXEOBJECTS) $(EXE_OUTDIR) $(EXE_OUT_FILE) $(SYMBOL_OUTDIR) $(DEPENDMAKEFILES)
-	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
+$(RELEASE_SHARED_TARGET):release_depend $(RELEASE_OBJECTS)
+	$(call build_shared_lib,$@,$(RELEASE_OBJECTS)) # no blank between ,
 
-$(TEST_OUTDIR)/%:FORCE
-	cp $(TESTDIR)/$* $@
+$(DEBUG_EXETARGET):$(DEBUG_STATIC_TARGET) debug_exedepend $(DEBUG_EXEOBJECTS)
+	@$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(DEBUG_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
+	ln -sf $(EXE_OUTDIR)/$@ $(subst $(DEBUG_SUFFIX),,$@)
+
+$(RELEASE_EXETARGET):$(RELEASE_STATIC_TARGET) release_exedepend $(RELEASE_EXEOBJECTS)
+	@$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(RELEASE_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
+	strip $(EXE_OUTDIR)/$@
+	ln -sf $(EXE_OUTDIR)/$@ $(subst $(RELEASE_SUFFIX),,$@)
 
 $(OUTDIR):$(OUTDIR_PREFIX)
 	@if [ ! -d $@ ]; then mkdir -p $@; fi;
 
 $(OUTDIR_PREFIX):
-	@if [ ! -d $@ ]; then mkdir -p $@; fi;
-
-$(TEST_OUTDIR):
-	@if [ ! -d $@ ]; then mkdir -p $@; fi;
-
-$(TESTOUTSUBDIR):
 	@if [ ! -d $@ ]; then mkdir -p $@; fi;
 
 $(EXE_OUTDIR):
@@ -137,61 +145,56 @@ $(EXEOUTSUBDIR):
 $(OUTSUBDIR):
 	@if [ ! -d $@ ]; then mkdir -p $@; fi;
 
-$(SYMBOL_OUTDIR):$(OUTDIR_PREFIX)
-	@if [ ! -d $@ ]; then mkdir -p $@; fi;
+-include $(DEBUG_DEPENDFILES)
+-include $(DEBUG_EXEDEPENDFILES)
+$(OUTDIR)/%$(DEBUG_SUFFIX).d.tmp:%.cpp
+	$(call build_dependency,$@,$<,$*,$(CXXFLAGS)) # no blank between ,
 
--include $(DEPENDFILES)
--include $(TESTDEPENDFILES)
--include $(EXEDEPENDFILES)
-$(OUTDIR)/%.d.tmp:%.cpp
-	@echo "building dependancy for $<..."
-	@set -e; rm -f $@ $(OUTDIR)/$*.d; \
-	($(CC) $(CXXFLAGS) -MM -c $< > $@ || rm -f $@) &&  \
-	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*.o $@: ,g' <$@ >$(OUTDIR)/$*.d; 
+$(OUTDIR)/%$(DEBUG_SUFFIX).d.tmp:%.c
+	$(call build_dependency,$@,$<,$*,$(CFLAGS)) # no blank between ,
 
-$(OUTDIR)/%.d.tmp:%.c
-	@echo "building dependancy for $<..."
-	@set -e; rm -f $@ $(OUTDIR)/$*.d; \
-	($(cc) $(CXXFLAGS) -MM -c $< > $@ || rm -f $@) &&  \
-	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*.o $@: ,g' <$@ >$(OUTDIR)/$*.d; 
-
-$(OUTDIR)/%.o:%.cpp $(DEPENDMAKEFILES)
+$(OUTDIR)/%$(DEBUG_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
-$(OUTDIR)/%.o:%.c $(DEPENDMAKEFILES)
+$(OUTDIR)/%$(DEBUG_SUFFIX).o:%.c $(DEPENDMAKEFILES)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+-include $(RELEASE_DEPENDFILES)
+-include $(RELEASE_EXEDEPENDFILES)
+$(OUTDIR)/%$(RELEASE_SUFFIX).d.tmp:%.cpp
+	$(call build_dependency,$@,$<,$*,$(CXXFLAGS)) # no blank between ,
+
+$(OUTDIR)/%$(RELEASE_SUFFIX).d.tmp:%.c
+	$(call build_dependency,$@,$<,$*,$(CFLAGS)) # no blank between ,
+
+$(OUTDIR)/%$(RELEASE_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
-AutoMsg/%.h:AutoMsg/%.msg $(PROJBASE)/build/genMsg.pl
-	perl $(PROJBASE)/build/genMsg.pl $<
+$(OUTDIR)/%$(RELEASE_SUFFIX).o:%.c $(DEPENDMAKEFILES)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-LuaObject/%.cpp: LuaObject/%.pkg
-	$(PROJBASE)/3PP/tolua++/bin/tolua++ -o $@ $<
-
-dependdir:
-	@for DIR in $(DEPEND_DIR);  \
-	do                     \
-		make -C $$DIR || exit -1;  \
-	done                  
-
-depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDTARGET)
-testdepend: $(OUTDIR) $(TESTOUTSUBDIR) $(TESTDEPENDTARGET)
-exedepend: $(OUTDIR) $(EXEOUTSUBDIR) $(EXEDEPENDTARGET)
-
+debug_depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(DEBUG_DEPENDTARGET)
+debug_exedepend: $(OUTDIR) $(EXEOUTSUBDIR) $(EXE_OUTDIR) $(DEPENDMAKEFILES) $(DEBUG_EXEDEPENDTARGET)
+release_depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(RELEASE_DEPENDTARGET)
+release_exedepend: $(OUTDIR) $(EXEOUTSUBDIR) $(EXE_OUTDIR) $(DEPENDMAKEFILES) $(RELEASE_EXEDEPENDTARGET)
 
 FORCE:
 
-.PHONY:clean depend exedepend test testdepend dependdir
+.PHONY:clean debug_depend debug_exedepend release_depend release_exedepend
 clean:
-	@rm -rf $(OUTDIR) $(AUTOTARGET) \
-		$(OUTDIR_PREFIX)/$(MOD_NAME).objectlist \
-		$(ALL_TARGET) \
-        $(TEST_OUT_FILE) \
-        $(SYMBOL_OUTDIR) \
-        $(TEST_OUTDIR)/$(MOD_NAME)* 
-	@if [ "1" = `ls -l $(OUTDIR_PREFIX)/ 2>/dev/null | wc -l` ]; then \
-		rm -rf $(OUTDIR_PREFIX); \
-	fi;
-	@if [ "2" = `ls -l $(OUTDIR_PREFIX)/ 2>/dev/null | wc -l` ]; then \
-		rm -rf $(OUTDIR_PREFIX); \
-	fi;
+	@rm -rf $(OUTDIR_PREFIX)
 
+install: $(RELEASE_EXETARGET)
+	@install -d $(PREFIX)
+	@for EXE_FILE in $(RELEASE_EXETARGET) ;  \
+	do					 \
+		echo "install -s $(EXE_OUTDIR)/$$EXE_FILE $(PREFIX)/bin/$$EXE_FILE"; \
+		install $(EXE_OUTDIR)/$$EXE_FILE $(PREFIX)/bin/$$EXE_FILE; \
+	done;
+
+uninstall:
+	@for EXE_FILE in $(RELEASE_EXETARGET) ;  \
+	do					 \
+		echo "rm -f $(PREFIX)/bin/$$EXE_FILE"; \
+		rm -f $(PREFIX)/bin/$$EXE_FILE; \
+	done;
