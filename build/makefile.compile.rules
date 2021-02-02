@@ -122,11 +122,11 @@ $(RELEASE_SHARED_TARGET):release_depend $(RELEASE_OBJECTS)
 	$(call build_shared_lib,$@,$(RELEASE_OBJECTS)) # no blank between ,
 
 $(DEBUG_EXETARGET):$(DEBUG_STATIC_TARGET) debug_exedepend $(DEBUG_EXEOBJECTS)
-	@$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(DEBUG_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
+	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(DEBUG_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 	ln -sf $(EXE_OUTDIR)/$@ $(subst $(DEBUG_SUFFIX),,$@)
 
 $(RELEASE_EXETARGET):$(RELEASE_STATIC_TARGET) release_exedepend $(RELEASE_EXEOBJECTS)
-	@$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(RELEASE_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
+	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(RELEASE_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 	strip $(EXE_OUTDIR)/$@
 	ln -sf $(EXE_OUTDIR)/$@ $(subst $(RELEASE_SUFFIX),,$@)
 

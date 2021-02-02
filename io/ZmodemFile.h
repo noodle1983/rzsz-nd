@@ -28,12 +28,12 @@ public:
 	unsigned read(char*buf, unsigned size);
 	void setPos(unsigned long long pos);
 
-	bool isGood(){return file_.good();}
+	bool isGood(){return fileM.good();}
 
 private:
 	bool parseInfo(const std::string& fileinfo);
 
-	std::fstream file_;
+	std::fstream fileM;
 	std::string fileNameM;
 	unsigned long long fileSizeM;
 	unsigned long long fileTimeM;

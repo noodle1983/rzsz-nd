@@ -5,7 +5,7 @@ AR=ar
 RANLIB=ranlib 
 ARFLAGS=rcs
 SHAREDFLAG= -fPIC -shared
-DEBUG_CFLAGS= -g -fsanitize=address -fno-omit-frame-pointer
+DEBUG_CFLAGS= -g -fsanitize=address -fno-omit-frame-pointer -DDEBUG
 RELEASE_CFLAGS= -O3
 CFLAGS= -Wall -D_FILE_OFFSET_BITS=64 $(INC_DIR)
 CXXFLAGS= -std=c++17 $(CFLAGS)

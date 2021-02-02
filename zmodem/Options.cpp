@@ -1,6 +1,8 @@
 #include "Options.h"
 #include "ZmodemFile.h"
 #include <iostream>
+#include <filesystem>
+#include <map>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -10,27 +12,56 @@
 
 using namespace nd;
 using namespace std;
+namespace fs = filesystem;
+
+
+void checkAddFile(const string& abPath, const string& rePath, vector<ZmodemFile*>& files)
+{
+    ifstream ifs(abPath);
+    if (!ifs.good()){
+        cerr << "can't access file:" << abPath << endl;
+        exit(-1);
+    }
+    ifs.close();
+
+    struct stat fileStat;
+    memset(&fileStat, 0, sizeof(struct stat));
+    int ret = ::stat(abPath.c_str(), &fileStat);
+    if (ret != 0) {
+        cerr << "can't access file:" << abPath << endl;
+        exit(-1);
+    }
+
+    ZmodemFile* file  = new ZmodemFile(abPath, rePath, fileStat.st_size, fileStat.st_mtim.tv_sec);
+    files.push_back(file);
+}
 
 void Options::addFiles(TCLAP::UnlabeledMultiArg<string>& optionsFiles)
 {
+    // 1. the relative path
     auto files = optionsFiles.getValue();
     for(auto f : files){
-        struct stat fileStat;
-        memset(&fileStat, 0, sizeof(struct stat));
-        int ret = ::stat(f.c_str(), &fileStat);
-        if (ret != 0) {
-            cerr << "can't access file:" << f << endl;
+        fs::path fsPath = fs::absolute(f);
+        if(!fs::exists(fsPath)){
+            cerr << "file does not exist:" << f << endl;
             exit(-1);
         }
 
-        ifstream fs(f);
-        if (!fs.good()){
-            cerr << "can't access file:" << f << endl;
-            exit(-1);
+        if(fs::is_directory(fsPath)){
+            string base = fsPath.parent_path();
+            for(auto& p: fs::recursive_directory_iterator(fsPath)){
+                auto childFsPath = p.path();
+                if (!fs::is_directory(childFsPath)){
+                    string abPath = childFsPath;
+                    string rePath = abPath.substr(base.length() + 1);
+                    checkAddFile(abPath, rePath, filesM);
+                }
+            }
+        }
+        else{
+            checkAddFile(fsPath, fsPath.filename(), filesM);
         }
 
-        ZmodemFile* file  = new ZmodemFile(f, f, fileStat.st_size, fileStat.st_mtim.tv_sec);
-        filesM.push_back(file);
     }
 }
 

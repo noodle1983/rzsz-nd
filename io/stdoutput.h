@@ -25,12 +25,12 @@ namespace nd
             int writeIndex = 0;
             do{
                 int dataLen = len - writeIndex;
-                int writed = write(STDOUT_FILENO, buffer + writeIndex, dataLen);
-                if (writed > 0){
-                    writeIndex += writed;
+                int written = write(STDOUT_FILENO, buffer + writeIndex, dataLen);
+                if (written > 0){
+                    writeIndex += written;
                 }
 
-                if (writed != dataLen){
+                if (written != dataLen){
                     waitUntilWritable(STDOUT_FILENO);
                 }
             }while(writeIndex < len);

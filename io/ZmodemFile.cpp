@@ -58,23 +58,23 @@ ZmodemFile::ZmodemFile(
 	std::string full_path = dir + "/" + filename;
 	unsigned found = full_path.find_last_of("/\\");
 	createDir(full_path.substr(0,found));
-	file_.open(full_path.c_str(), std::fstream::out|std::fstream::binary|std::fstream::trunc);
+	fileM.open(full_path.c_str(), std::fstream::out|std::fstream::binary|std::fstream::trunc);
 }
 
 ZmodemFile::~ZmodemFile()
 {
-	file_.close();
+	fileM.close();
 }
 
 bool ZmodemFile::write(const char* buf, unsigned long long len)
 {
-	if (!file_.is_open() || len + posM > fileSizeM){
+	if (!fileM.is_open() || len + posM > fileSizeM){
         LOG_ERROR("write failed! errno:" << errno);
 		return 0;
 	}
-    long long pos = file_.tellp();
-    file_.write(buf, len);
-	long long written = (long long)file_.tellp() - pos;
+    long long pos = fileM.tellp();
+    fileM.write(buf, len);
+	long long written = (long long)fileM.tellp() - pos;
     if (written != (long long)len){
         LOG_ERROR("write not match. input len:" << len << ", written:" << written);
 		return 0;
@@ -99,9 +99,9 @@ bool ZmodemFile::parseInfo(const std::string& fileinfo)
 	return 1;
 }
 
-ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& basename, unsigned long long filesize, unsigned long long filetime)
-	: file_(filepath.c_str(), std::fstream::in|std::fstream::binary),
-	fileNameM(filepath),
+ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& rePath, unsigned long long filesize, unsigned long long filetime)
+	: fileM(filepath.c_str(), std::fstream::in|std::fstream::binary),
+	fileNameM(rePath),
 	fileSizeM(filesize),
 	fileTimeM(filetime),
 	posM(0)
@@ -110,10 +110,10 @@ ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& basename,
 
 unsigned ZmodemFile::read(char*buf, unsigned size)
 {
-	if (!file_.is_open() || !file_.good())
+	if (!fileM.is_open() || !fileM.good())
 		return 0;
-	file_.read(buf, size);
-	unsigned rlen = file_.gcount();
+	fileM.read(buf, size);
+	unsigned rlen = fileM.gcount();
 	posM += rlen;
 	return rlen;
 }
@@ -123,7 +123,7 @@ void ZmodemFile::setPos(unsigned long long pos)
 	if (pos > fileSizeM)
 		return;
 
-	file_.seekg(pos);
+	fileM.seekg(pos);
 	posM = pos;
 }
 
