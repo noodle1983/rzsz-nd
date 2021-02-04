@@ -11,7 +11,7 @@ public:
 	RzSession();
 	virtual ~RzSession();
 
-	static void sendLeadingMsg(nd::Session* session);
+	void sendLeadingMsg();
 
 private:
 };

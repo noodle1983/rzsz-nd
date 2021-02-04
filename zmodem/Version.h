@@ -11,6 +11,7 @@
  * version 1
  * 1. sz/rz dir.
  *      a. support relative path.
+ * 2. support large file(>4GB)
  */
 const uint8_t ZVERSION = 1;
 

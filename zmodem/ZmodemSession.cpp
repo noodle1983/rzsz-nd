@@ -203,100 +203,6 @@ void ZmodemSession::parseBin32Frame()
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::handleFrame()
-{
-	switch (inputFrameM->type){
-    case ZRQINIT:
-        return sendZrinit();
-
-    case ZFILE: 
-		isSzM = true;
-		return handleZfile();
-    case ZDATA:
-		return handleZdata();
-    case ZEOF:
-		if (zmodemFileM){
-			delete zmodemFileM;
-			zmodemFileM = NULL;
-		}
-		return sendZrinit();
-    case ZFIN:
-		sendFinOnResetM = true;
-		handleEvent(RESET_EVT);
-		return;
-    case ZRINIT:
-		isSzM = false;
-		return;
-	case ZRPOS: {
-			if (!zmodemFileM) {
-				sendFinOnResetM = true;
-				sendBin32FrameHeader(ZCAN, 0);
-				sendBin32FrameHeader(ZABORT, 0);
-				handleEvent(RESET_EVT);
-				return;
-			}
-			unsigned pos = getPos(inputFrameM);
-			output("remote set pos to %d", pos);
-			zmodemFileM->setPos(pos);
-			sendBin32FrameHeader(ZDATA, zmodemFileM->getPos());
-			sendZdata();
-		}
-		return;
-    case ZNAK:
-		if (decodeIndexM < bufferLenM){
-			handleEvent(NETWORK_INPUT_EVT);
-		}
-		return;
-    case ZSINIT:
-		LOG_SE_ERROR("unexpected frame type:ZSINIT");
-		break;
-    case ZACK:
-		LOG_SE_ERROR("unexpected frame type:ZACK");
-		break;
-    case ZSKIP:
-		LOG_SE_ERROR("unexpected frame type:ZSKIP. no permission to write file?");
-		break;
-    case ZABORT:
-		LOG_SE_ERROR("unexpected frame type:ZABORT");
-		break;
-    case ZFERR:
-		LOG_SE_ERROR("unexpected frame type:ZFERR");
-		break;
-    case ZCRC:
-		LOG_SE_ERROR("unexpected frame type:ZCRC");
-		break;
-    case ZCHALLENGE:
-		LOG_SE_ERROR("unexpected frame type:ZCHALLENGE");
-		break;
-    case ZCOMPL:
-		LOG_SE_ERROR("unexpected frame type:ZCOMPL");
-		break;
-    case ZCAN:
-		LOG_SE_ERROR("unexpected frame type:ZCAN");
-		break;
-    case ZFREECNT:
-		LOG_SE_ERROR("unexpected frame type:ZFREECNT");
-		break;
-    case ZCOMMAND:
-		LOG_SE_ERROR("unexpected frame type:ZCOMMAND");
-		break;
-    case ZSTDERR:
-		LOG_SE_ERROR("unexpected frame type:ZSTDERR");
-		break;
-    default:
-        LOG_SE_ERROR("invalid frame type!");
-        break;
-
-
-    }
-    handleEvent(RESET_EVT);
-    return ;
-
-
-}
-
-//-----------------------------------------------------------------------------
-
 void ZmodemSession::sendZdata()
 {
 	const unsigned BUFFER_LEN = 1024;
@@ -318,17 +224,6 @@ void ZmodemSession::sendZdata()
 		if (!isToDelete()) asynHandleEvent(SEND_ZDATA_EVT);
 		return;
 	}
-}
-
-//-----------------------------------------------------------------------------
-
-void ZmodemSession::onSentTimeout()
-{
-	if (!zmodemFileM->isGood()) {
-		//LOG_SE_ERROR(".");
-		newTimer(1000);
-	}
-
 }
 
 //-----------------------------------------------------------------------------
@@ -620,50 +515,6 @@ void ZmodemSession::send_zsda32(char *buf, size_t length, char frameend)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendFileInfo()
-{
-	//USES_CONVERSION;
-	//base::PlatformFileInfo info;
-	//bool res = GetFileInfo(uploadFilePath_, &info);
-	//std::string basename(W2A(uploadFilePath_.BaseName().value().c_str()));
-	//if (res == false){
-	//	std::string out(std::string("can't get info of file:") + basename + "");
-	//	LOG_SE_ERROR(out.c_str());
-	//	handleEvent(RESET_EVT);
-	//	return;
-	//}
-	//if (info.size >= 0x100000000) {
-	//	LOG_SE_ERROR("The file size[%llu] is larger than %lu(max in 4 bytes defined in zmodem)!", info.size, 0xFFFFFFFF);
-	//	handleEvent(RESET_EVT);
-	//	return;
-	//}
-    std::string basename;
-	char filedata[1024] = {0};
-	unsigned filedata_len = 0;
-	memcpy(filedata + filedata_len, basename.c_str(), basename.length() +1);
-	filedata_len += basename.length() +1;
-	//snprintf(filedata + filedata_len, sizeof(filedata_len) - filedata_len, "%lu %lo 100644 0 1 %lu", 
-	//	(long)info.size, (long)(info.last_modified.ToInternalValue()/1000000), (long)info.size);
-	filedata_len += strlen(filedata + filedata_len);
-	filedata[filedata_len++] = 0;
-
-	frame32_t frame;
-	frame.type = ZFILE;
-	frame.flag[ZF0] = ZCBIN;	/* file conversion request */
-	frame.flag[ZF1] = ZF1_ZMCLOB;	/* file management request */
-	frame.flag[ZF2] = 0;	/* file transport request */
-	frame.flag[ZF3] = ZVERSION;
-	sendBin32Frame(frame);
-	send_zsda32(filedata, filedata_len, ZCRCW);
-
-	if (zmodemFileM){
-		delete zmodemFileM;
-		zmodemFileM = NULL;
-	}
-	//zmodemFileM = new ZmodemFile(W2A(uploadFilePath_.value().c_str()), basename, info.size);
-}
-//-----------------------------------------------------------------------------
-
 uint16_t ZmodemSession::decodeCrc(const int index, int& consume_len)
 {
 	uint16_t ret = 0;
@@ -678,30 +529,6 @@ uint32_t ZmodemSession::decodeCrc32(const int index, int& consume_len)
 	uint32_t ret = 0;
 	decodeEscapeStruct<uint32_t>(index, consume_len, ret);
 	return ret;
-}
-//-----------------------------------------------------------------------------
-
-void ZmodemSession::handleFlowCntl()
-{
-	while (decodeIndexM < bufferLenM)
-	{
-		char code = bufferM[decodeIndexM];
-		if (code == XOFF) {
-			decodeIndexM++;
-			eatBuffer();
-			handleEvent(SEND_ZDATA_LATER_EVT);
-		}
-		else if (code == XON)
-		{
-			decodeIndexM++;
-			eatBuffer();
-		}
-		else
-		{
-			asynHandleEvent(CHECK_FRAME_TYPE_EVT);
-			return;
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -943,18 +770,39 @@ void ZmodemSession::sendZfin()
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendOO(nd::Session* session)
+void ZmodemSession::sendOO()
 {
-    ZmodemSession* self = (ZmodemSession*)session;
-	if (self->inputFrameM->type != ZFIN){
-        self->asynHandleEvent(DESTROY_EVT);
+	if (inputFrameM->type != ZFIN){
+        asynHandleEvent(DESTROY_EVT);
         return;
     }
     const char* oo = "OO";
     g_stdout->sendData(oo, strlen(oo));
-    self->asynHandleEvent(RESET_EVT);
+    asynHandleEvent(RESET_EVT);
 }
 
 //-----------------------------------------------------------------------------
 
+void ZmodemSession::handleZfileRsp()
+{
+    if (inputFrameM->type == ZSKIP){
+        asynHandleEvent(SKIP_EVT);
+        return;
+    }
+	if (inputFrameM->type != ZRPOS || zmodemFileM == NULL){
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
+
+    uint64_t pos = getPos(inputFrameM);
+    LOG_INFO(getSessionName() 
+        << "[" << getSessionId() << "] " << getCurState().getName() << " "
+        << "got ZRPOS:" << pos);
+
+    zmodemFileM->setPos(pos);
+    sendBin32FrameHeader(ZDATA, pos);
+    asynHandleEvent(SEND_ZDATA_EVT);
+}
+
+//-----------------------------------------------------------------------------
 

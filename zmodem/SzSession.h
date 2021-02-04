@@ -12,10 +12,9 @@ public:
 	virtual ~SzSession();
     void sz(std::vector<ZmodemFile*>& files);
 
-	static void sendLeadingMsg(nd::Session* session);
-	static void sendZrqinit(nd::Session* session);
-	static void sendZfile(nd::Session* session);
-    static void handleZfileRsp(nd::Session* session);
+	void sendLeadingMsg();
+	void sendZrqinit();
+	void sendZfile();
 
 private:
     std::vector<ZmodemFile*> filesM;

@@ -17,17 +17,17 @@ nd::FiniteStateMachine* SzSession::getZmodemFsm()
     {
         nd::FiniteStateMachine* fsm = new nd::FiniteStateMachine;
         (*fsm) += FSM_STATE(IDLE_STATE);
-        (*fsm) +=      FSM_EVT_S(ENTRY_EVT,      &ZmodemSession::initState);
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,      SE_FUNC(ZmodemSession, initState));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,      NEW_TIMER(1000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,    CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(SEND_FILE_EVT,  CHANGE_STATE(SEND_ZRQINIT_STATE));
         (*fsm) +=      FSM_EVENT(RESET_EVT,      CHANGE_STATE(IDLE_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,    CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,       CANCEL_TIMER());
-        (*fsm) +=      FSM_EVENT(EXIT_EVT,       &SzSession::sendLeadingMsg);
+        (*fsm) +=      FSM_EVENT(EXIT_EVT,       SE_FUNC(SzSession, sendLeadingMsg));
 
         (*fsm) += FSM_STATE(SEND_ZRQINIT_STATE);
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         &SzSession::sendZrqinit);
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(SzSession, sendZrqinit));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(RESET_EVT,         CHANGE_STATE(END_STATE));
@@ -37,7 +37,7 @@ nd::FiniteStateMachine* SzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
         (*fsm) += FSM_STATE(SEND_ZFILE_STATE);
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         &SzSession::sendZfile);
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(SzSession, sendZfile));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
@@ -48,7 +48,7 @@ nd::FiniteStateMachine* SzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
         (*fsm) += FSM_STATE(HANDLE_ZFILE_RSP_STATE);
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         &SzSession::handleZfileRsp);
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(ZmodemSession, handleZfileRsp));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
@@ -71,7 +71,7 @@ nd::FiniteStateMachine* SzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(1000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(DESTROY_STATE));
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, parseFrame));
-        (*fsm) +=      FSM_EVENT(HANDLE_FRAME_EVT,  &ZmodemSession::sendOO);
+        (*fsm) +=      FSM_EVENT(HANDLE_FRAME_EVT,  SE_FUNC(ZmodemSession, sendOO));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(DESTROY_STATE));
         (*fsm) +=      FSM_EVENT(RESET_EVT,         CHANGE_STATE(DESTROY_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
@@ -114,7 +114,7 @@ void SzSession::sz(std::vector<ZmodemFile*>& files)
 
 //-----------------------------------------------------------------------------
 
-void SzSession::sendLeadingMsg(nd::Session* session)
+void SzSession::sendLeadingMsg()
 {
     const char* msg = "rz\r";
     g_stdout->sendData(msg, strlen(msg));
@@ -122,11 +122,10 @@ void SzSession::sendLeadingMsg(nd::Session* session)
 
 //-----------------------------------------------------------------------------
 
-void SzSession::sendZrqinit(nd::Session* session)
+void SzSession::sendZrqinit()
 {
-    SzSession* self = (SzSession*)session;
-    if(self->filesM.empty()){
-        self->asynHandleEvent(DESTROY_EVT);
+    if(filesM.empty()){
+        asynHandleEvent(DESTROY_EVT);
         return;
     }
     
@@ -136,38 +135,42 @@ void SzSession::sendZrqinit(nd::Session* session)
 	frame.flag[ZF1] = 0;
 	frame.flag[ZF2] = 0;
 	frame.flag[ZF3] = ZVERSION;
-	self->sendBin32Frame(frame);
-    self->startInputTimer();
+	sendBin32Frame(frame);
+    startInputTimer();
 }
 
 //-----------------------------------------------------------------------------
 
-void SzSession::sendZfile(nd::Session* session)
+void SzSession::sendZfile()
 {
-    SzSession* self = (SzSession*)session;
-	if (self->inputFrameM->type != ZRINIT || self->filesM.size() == 0){
-        self->asynHandleEvent(DESTROY_EVT);
+	if (inputFrameM->type != ZRINIT || filesM.size() == 0){
+        asynHandleEvent(DESTROY_EVT);
         return;
     }
-    self->peerVersionM = self->inputFrameM->flag[ZF3];
+    peerVersionM = inputFrameM->flag[ZF3];
     
-	if (self->zmodemFileM){
-		delete self->zmodemFileM;
-		self->zmodemFileM = NULL;
+	if (zmodemFileM){
+		delete zmodemFileM;
+		zmodemFileM = NULL;
 	}
-    self->zmodemFileM = self->filesM.back();
-    self->filesM.pop_back();
+    zmodemFileM = filesM.back();
+    filesM.pop_back();
+	//if (info.size >= 0x100000000) {
+	//	LOG_SE_ERROR("The file size[%llu] is larger than %lu(max in 4 bytes defined in zmodem)!", info.size, 0xFFFFFFFF);
+	//	handleEvent(RESET_EVT);
+	//	return;
+	//}
 
-    const std::string& basename = self->zmodemFileM->getFilename();
+    const std::string& basename = zmodemFileM->getFilename();
 	char filedata[1024] = {0};
 	unsigned filedata_len = 0;
 	memcpy(filedata + filedata_len, basename.c_str(), basename.length());
 	filedata_len += basename.length();
 	filedata[filedata_len++] = 0;
 	snprintf(filedata + filedata_len, sizeof(filedata_len) - filedata_len, "%llu %lo 100644 0 1 %llu", 
-		self->zmodemFileM->getFileSize(),
-        (long)self->zmodemFileM->getFileTime(),
-        self->zmodemFileM->getFileSize());
+		zmodemFileM->getFileSize(),
+        (long)zmodemFileM->getFileTime(),
+        zmodemFileM->getFileSize());
 	filedata_len += strlen(filedata + filedata_len);
 	filedata[filedata_len++] = 0;
 
@@ -177,37 +180,11 @@ void SzSession::sendZfile(nd::Session* session)
 	frame.flag[ZF1] = ZF1_ZMCLOB;	/* file management request */
 	frame.flag[ZF2] = 0;	/* file transport request */
 	frame.flag[ZF3] = ZVERSION;
-	self->sendBin32Frame(frame);
+	sendBin32Frame(frame);
     //Pathname\0Length ModificationDate FileMode SerialNumber NumberOfFilesRemaining NumberOfBytesRemaining FileType
-	self->send_zsda32(filedata, filedata_len, ZCRCW);
+	send_zsda32(filedata, filedata_len, ZCRCW);
 
 }
 
 //-----------------------------------------------------------------------------
-
-void SzSession::handleZfileRsp(nd::Session* session)
-{
-    SzSession* self = (SzSession*)session;
-    if (self->inputFrameM->type == ZSKIP){
-        self->asynHandleEvent(SKIP_EVT);
-        return;
-    }
-	if (self->inputFrameM->type != ZRPOS || self->zmodemFileM == NULL){
-        self->asynHandleEvent(DESTROY_EVT);
-        return;
-    }
-
-    uint64_t pos = getPos(self->inputFrameM);
-    LOG_INFO(self->getSessionName() 
-        << "[" << self->getSessionId() << "] " << self->getCurState().getName() << " "
-        << "got ZRPOS:" << pos);
-
-    self->zmodemFileM->setPos(pos);
-    self->sendBin32FrameHeader(ZDATA, pos);
-    self->asynHandleEvent(SEND_ZDATA_EVT);
-}
-
-//-----------------------------------------------------------------------------
-
-
 

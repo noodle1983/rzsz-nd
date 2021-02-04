@@ -94,18 +94,15 @@ public:
 	void parseHexFrame();
 	void parseBinFrame();
 	void parseBin32Frame();
-	void handleFrame();
 	void sendZrinit();
 	void handleZfile();
 	void handleZdata();
-	void handleFlowCntl();
 	void sendZrpos();
-	void onSentTimeout();
-	void sendFileInfo();
 	void sendZfin();
+	void sendOO();
+    void handleZfileRsp();
 
 	static void deleteSelf(nd::Session* session);
-	static void sendOO(nd::Session* session);
 
 	const char* curBuffer(){return bufferM + decodeIndexM;}
 	void eatBuffer(){
