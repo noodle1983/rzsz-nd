@@ -1,6 +1,7 @@
 #include "ZmodemSession.h"
 #include "crctab.h"
 #include "zmodem.h"
+#include "Version.h"
 #include "stdinput.h"
 #include "stdoutput.h"
 #include "string.h"
@@ -13,7 +14,7 @@ ZmodemSession::ZmodemSession(nd::FiniteStateMachine* fsm)
 	, lastEscapedM(false)
     , zmodemFileM(NULL)
     , inputTimerM(NULL)
-    , versionM(0)
+    , peerVersionM(0)
 {
 	inputFrameM = new frame_t;
 	sendFinOnResetM = false;
@@ -93,18 +94,15 @@ void ZmodemSession::parseFrame()
 	int frametype = bufferM[decodeIndexM++];
 	if (ZHEX == frametype){
         parseHexFrame();
-        return;
 	}else if (ZBIN == frametype){
         parseBinFrame();
-        return;
 	}else if (ZBIN32 == frametype){
         parseBin32Frame();
-        return;
 	}else{
 		//LOG_SE_ERROR("only support(HEX,BIN,BIN32) frame");
 		handleEvent(RESET_EVT);
-		return;
 	}
+    return;
 }
 
 //-----------------------------------------------------------------------------
@@ -540,6 +538,7 @@ void ZmodemSession::sendZrinit()
     memset(&frame, 0, sizeof(frame_t));
     frame.type = ZRINIT;
     frame.flag[ZF0] = CANFC32|CANFDX|CANOVIO;
+    frame.flag[ZF3] = ZVERSION;
 	sendFrame(frame);
 }
 
@@ -555,6 +554,7 @@ void ZmodemSession::handleZfile()
         asynHandleEvent(DESTROY_EVT);
         return;
     }
+    peerVersionM = inputFrameM->flag[ZF3];
 
     if (bufferLenM - decodeIndexM > 1024){
         asynHandleEvent(DESTROY_EVT);
@@ -652,7 +652,7 @@ void ZmodemSession::sendFileInfo()
 	frame.flag[ZF0] = ZCBIN;	/* file conversion request */
 	frame.flag[ZF1] = ZF1_ZMCLOB;	/* file management request */
 	frame.flag[ZF2] = 0;	/* file transport request */
-	frame.flag[ZF3] = 0;
+	frame.flag[ZF3] = ZVERSION;
 	sendBin32Frame(frame);
 	send_zsda32(filedata, filedata_len, ZCRCW);
 

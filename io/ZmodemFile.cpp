@@ -55,10 +55,10 @@ ZmodemFile::ZmodemFile(
 {
 	parseInfo(fileinfo);
 
-	std::string full_path = dir + "/" + filename;
-	unsigned found = full_path.find_last_of("/\\");
-	createDir(full_path.substr(0,found));
-	fileM.open(full_path.c_str(), std::fstream::out|std::fstream::binary|std::fstream::trunc);
+	std::string fullPathM = dir + "/" + filename;
+	unsigned found = fullPathM.find_last_of("/\\");
+	createDir(fullPathM.substr(0,found));
+	fileM.open(fullPathM.c_str(), std::fstream::out|std::fstream::binary|std::fstream::trunc);
 }
 
 ZmodemFile::~ZmodemFile()
@@ -101,6 +101,7 @@ bool ZmodemFile::parseInfo(const std::string& fileinfo)
 
 ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& rePath, unsigned long long filesize, unsigned long long filetime)
 	: fileM(filepath.c_str(), std::fstream::in|std::fstream::binary),
+	fullPathM(filepath),
 	fileNameM(rePath),
 	fileSizeM(filesize),
 	fileTimeM(filetime),

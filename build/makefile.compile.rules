@@ -73,6 +73,7 @@ define build_static_lib
         echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2)"; \
         $(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2); \
         echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
+        echo ""; \
     fi
 endef
 
@@ -83,6 +84,7 @@ define build_shared_lib
         echo "$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2)"; \
         $(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2); \
         echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
+        echo ""; \
 	fi;
 endef
 
@@ -122,10 +124,12 @@ $(RELEASE_SHARED_TARGET):release_depend $(RELEASE_OBJECTS)
 	$(call build_shared_lib,$@,$(RELEASE_OBJECTS)) # no blank between ,
 
 $(DEBUG_EXETARGET):$(DEBUG_STATIC_TARGET) debug_exedepend $(DEBUG_EXEOBJECTS)
+	@echo ""
 	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(DEBUG_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 	ln -sf $(EXE_OUTDIR)/$@ $(subst $(DEBUG_SUFFIX),,$@)
 
 $(RELEASE_EXETARGET):$(RELEASE_STATIC_TARGET) release_exedepend $(RELEASE_EXEOBJECTS)
+	@echo ""
 	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(RELEASE_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 	strip $(EXE_OUTDIR)/$@
 	ln -sf $(EXE_OUTDIR)/$@ $(subst $(RELEASE_SUFFIX),,$@)

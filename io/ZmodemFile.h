@@ -34,6 +34,7 @@ private:
 	bool parseInfo(const std::string& fileinfo);
 
 	std::fstream fileM;
+	std::string fullPathM;
 	std::string fileNameM;
 	unsigned long long fileSizeM;
 	unsigned long long fileTimeM;

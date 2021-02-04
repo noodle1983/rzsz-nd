@@ -3,6 +3,7 @@
 #include "zmodem.h"
 #include "stdoutput.h"
 #include "string.h"
+#include "Version.h"
 #include <assert.h>
 
 #include <iostream>
@@ -134,7 +135,7 @@ void SzSession::sendZrqinit(nd::Session* session)
 	frame.flag[ZF0] = 0;
 	frame.flag[ZF1] = 0;
 	frame.flag[ZF2] = 0;
-	frame.flag[ZF3] = 0; // version
+	frame.flag[ZF3] = ZVERSION;
 	self->sendBin32Frame(frame);
     self->startInputTimer();
 }
@@ -148,6 +149,7 @@ void SzSession::sendZfile(nd::Session* session)
         self->asynHandleEvent(DESTROY_EVT);
         return;
     }
+    self->peerVersionM = self->inputFrameM->flag[ZF3];
     
 	if (self->zmodemFileM){
 		delete self->zmodemFileM;
@@ -174,7 +176,7 @@ void SzSession::sendZfile(nd::Session* session)
 	frame.flag[ZF0] = ZCBIN;	/* file conversion request */
 	frame.flag[ZF1] = ZF1_ZMCLOB;	/* file management request */
 	frame.flag[ZF2] = 0;	/* file transport request */
-	frame.flag[ZF3] = 0;
+	frame.flag[ZF3] = ZVERSION;
 	self->sendBin32Frame(frame);
     //Pathname\0Length ModificationDate FileMode SerialNumber NumberOfFilesRemaining NumberOfBytesRemaining FileType
 	self->send_zsda32(filedata, filedata_len, ZCRCW);

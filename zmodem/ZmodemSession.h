@@ -168,7 +168,7 @@ protected:
     ZmodemFile* zmodemFileM;
     min_heap_item_t* inputTimerM;
 
-    int versionM;
+    uint8_t peerVersionM;
 };
 
 #endif /* ZMODEM_SESSION_H */
