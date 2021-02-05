@@ -177,7 +177,7 @@ void SzSession::sendZfile()
 	memcpy(filedata + filedata_len, basename.c_str(), basename.length());
 	filedata_len += basename.length();
 	filedata[filedata_len++] = 0;
-	snprintf(filedata + filedata_len, sizeof(filedata_len) - filedata_len, "%llu %lo 100644 0 1 %llu", 
+	snprintf(filedata + filedata_len, sizeof(filedata) - filedata_len, "%llu %lo 100644 0 1 %llu", 
 		zmodemFileM->getFileSize(),
         (long)zmodemFileM->getFileTime(),
         zmodemFileM->getFileSize());
@@ -194,6 +194,7 @@ void SzSession::sendZfile()
     //Pathname\0Length ModificationDate FileMode SerialNumber NumberOfFilesRemaining NumberOfBytesRemaining FileType
 	send_zsda32(filedata, filedata_len, ZCRCW);
 
+    LOG_SE_INFO("send ZFILE. filename:" << basename << ", file info:" << filedata[basename.length() + 1])
 }
 
 //-----------------------------------------------------------------------------
