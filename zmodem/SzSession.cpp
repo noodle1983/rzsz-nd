@@ -165,7 +165,7 @@ void SzSession::sendZfile()
                 << "] size[" << zmodemFileM->getFileSize() 
                 << "] is larger than the maximum in 4 bytes defined in zmodem)!";
 		reportM << std::endl;
-        reportM << "You need the newest version of putty-nd."
+        reportM << "To make it possible, you may need the newest version of putty-nd(https://noodle1983.github.io/tags/putty-nd).";
 		reportM << std::endl;
         asynHandleEvent(DESTROY_EVT);
 		return;
