@@ -12,6 +12,7 @@
 #define ZBIN 'A'
 #define ZHEX 'B'
 #define ZBIN32 'C'
+#define ZBIN64 'D'
 
 #define ENQ 005
 #define CAN ('X'&037)
@@ -59,7 +60,14 @@
 #define ZP1	1
 #define ZP2	2
 #define ZP3	3
+#define ZP4 4	
+#define ZP5	5
+#define ZP6 6	
+#define ZP7 7	
 
+/****************************************************************************
+the following flags, if not specified, are not implemented yet in rzsz-nd.
+*****************************************************************************/
 /* Bit Masks for ZRINIT flags byte ZF0 */
 #define CANFDX	0x01	/* Rx can send and receive true FDX */
 #define CANOVIO	0x02	/* Rx can receive data during disk I/O */
@@ -72,6 +80,7 @@
 /* Bit Masks for ZRINIT flags byze ZF1 */
 #define ZF1_CANVHDR  0x01  /* Variable headers OK, unused in lrzsz */
 #define ZF1_TIMESYNC 0x02 /* nonstandard, Receiver request timesync */
+#define ZF1_RZ_DIR   0x04 /*rzsz-nd Version 1, rz dir, make client show directory selection window */
 
 /* Parameters for ZSINIT frame */
 #define ZATTNLEN 32	/* Max length of attention string */
@@ -107,6 +116,8 @@
 
 /* Parameters for ZCOMMAND frame ZF0 (otherwise 0) */
 #define ZCACK1	1	/* Acknowledge, then do command */
+
+#define ZCMD_RZ_PRE_SET_PATH 2 /*rzsz-nd Version 1, followed by paths(file or dir, split by semicolon) on client, skipping the file selection*/
 
 /******************************
  *enum
@@ -175,6 +186,13 @@ struct frame32_tag{
 };
 typedef struct frame32_tag frame32_t;
 
+struct frame64_tag{
+    unsigned char type;
+    unsigned char flag[8];
+	uint32_t crc;
+};
+typedef struct frame64_tag frame64_t;
+
 struct lineseed_tag{
     char lineseed[2];         
 };
@@ -189,6 +207,7 @@ typedef struct lineseedxon_tag lineseedxon_t;
 
 const char HEX_PREFIX[] = {ZPAD, ZPAD, ZDLE, ZHEX};
 const char BIN32_PREFIX[] = {ZPAD, ZPAD, ZDLE, ZBIN32};
+const char BIN64_PREFIX[] = {ZPAD, ZPAD, ZDLE, ZBIN64};
 const char HEX_ARRAY[] = "0123456789abcdef";
 
 int hex2int(char hex);
@@ -198,8 +217,9 @@ void convHex2Plain(const hex_t *hexframe, frame_t* frame);
 void convPlain2Hex(const frame_t* frame, hex_t *hexframe);
 uint16_t calcFrameCrc(const frame_t *frame);
 uint32_t calcFrameCrc32(const frame32_t *frame);
+uint32_t calcFrame64Crc32(const frame64_t *frame);
 uint32_t calcBufferCrc32(const char *buf, const unsigned len);
-unsigned getPos(frame_t* frame);
+uint64_t getPos(frame64_t* frame);
 const char* getTypeStr(unsigned char type);
 
 /**

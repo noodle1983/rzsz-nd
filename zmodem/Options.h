@@ -24,6 +24,7 @@ public:
         : debugArgM("d", "debug", "set debug level. 0: TRACE; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR; 5: FATAL;",
                 false, DEFAULT_LOG_LEVEL, "int:0-5")
         , logFileArgM("l","log", "File to log", false, "./zmodem.log", "filename") 
+        , rzDirModeM(false)
     {
 
     }
@@ -46,6 +47,9 @@ public:
 
     // sz files
     std::vector<ZmodemFile*> filesM;
+
+    // rz files
+    bool rzDirModeM;
 };
 
 #define g_options nd::Singleton<nd::Options>::instance()

@@ -143,11 +143,11 @@ void SzSession::sendZrqinit()
 
 void SzSession::sendZfile()
 {
-	if (inputFrameM->type != ZRINIT || filesM.size() == 0){
+	if (inputFrameM.type != ZRINIT || filesM.size() == 0){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
-    peerVersionM = inputFrameM->flag[ZF3];
+    peerVersionM = inputFrameM.flag[ZF3];
     
 	if (zmodemFileM){
 		delete zmodemFileM;
@@ -155,11 +155,21 @@ void SzSession::sendZfile()
 	}
     zmodemFileM = filesM.back();
     filesM.pop_back();
-	//if (info.size >= 0x100000000) {
-	//	LOG_SE_ERROR("The file size[%llu] is larger than %lu(max in 4 bytes defined in zmodem)!", info.size, 0xFFFFFFFF);
-	//	handleEvent(RESET_EVT);
-	//	return;
-	//}
+
+	if (zmodemFileM->getFileSize() >= 0x100000000 && peerVersionM == 0) {
+		LOG_SE_ERROR("The file[" << zmodemFileM->getFilename()
+                << "] size[" << zmodemFileM->getFileSize() 
+                << "] is larger than the maximum in 4 bytes defined in zmodem)!");
+		reportM << std::endl;
+        reportM << "The file[" << zmodemFileM->getFilename()
+                << "] size[" << zmodemFileM->getFileSize() 
+                << "] is larger than the maximum in 4 bytes defined in zmodem)!";
+		reportM << std::endl;
+        reportM << "You need the newest version of putty-nd."
+		reportM << std::endl;
+        asynHandleEvent(DESTROY_EVT);
+		return;
+	}
 
     const std::string& basename = zmodemFileM->getFilename();
 	char filedata[1024] = {0};

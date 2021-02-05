@@ -72,6 +72,18 @@ uint32_t calcFrameCrc32(const frame32_t *frame)
     return crc;
 }
 
+uint32_t calcFrame64Crc32(const frame64_t *frame)
+{
+    int i = 0;
+    uint32_t crc = 0xFFFFFFFFL;
+    crc = UPDC32((frame->type & 0x7f), crc);
+    for (i = 0; i < 8; i++){
+        crc = UPDC32(frame->flag[i], crc);
+    }
+    crc = ~crc;;
+    return crc;
+}
+
 uint32_t calcBufferCrc32(const char *buf, const unsigned len)
 {
     uint32_t i = 0;
@@ -83,9 +95,14 @@ uint32_t calcBufferCrc32(const char *buf, const unsigned len)
     return crc;
 }
 
-unsigned getPos(frame_t* frame)
+uint64_t getPos(frame64_t* frame)
 {
-	unsigned rxpos = frame->flag[ZP3] & 0377;
+	uint64_t rxpos = 0;
+	rxpos = (rxpos<<8) + (frame->flag[ZP7] & 0377);
+	rxpos = (rxpos<<8) + (frame->flag[ZP6] & 0377);
+	rxpos = (rxpos<<8) + (frame->flag[ZP5] & 0377);
+	rxpos = (rxpos<<8) + (frame->flag[ZP4] & 0377);
+	rxpos = (rxpos<<8) + (frame->flag[ZP3] & 0377);
 	rxpos = (rxpos<<8) + (frame->flag[ZP2] & 0377);
 	rxpos = (rxpos<<8) + (frame->flag[ZP1] & 0377);
 	rxpos = (rxpos<<8) + (frame->flag[ZP0] & 0377);

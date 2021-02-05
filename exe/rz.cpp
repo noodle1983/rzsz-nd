@@ -20,7 +20,11 @@ void parseOption(int argc, char const *argv[]){
         TCLAP::CmdLine cmd("Receive file(s) with ZMODEM protocol.", ' ', "0.1");
 
         g_options->addCommonOptions(cmd);
+
+        TCLAP::SwitchArg isRzDirMode("f","rz-folder-mode","rz folder mode, make client to select folder.", cmd, false);
+
         cmd.parse( argc, argv );
+        g_options->rzDirModeM = isRzDirMode.getValue();
 	} catch (TCLAP::ArgException &e)
 	{ 
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;

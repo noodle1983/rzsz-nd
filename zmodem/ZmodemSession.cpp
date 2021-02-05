@@ -16,7 +16,7 @@ ZmodemSession::ZmodemSession(nd::FiniteStateMachine* fsm)
     , inputTimerM(NULL)
     , peerVersionM(0)
 {
-	inputFrameM = new frame_t;
+	memset(&inputFrameM, 0, sizeof(inputFrameM));
 	sendFinOnResetM = false;
 	isSzM = true;
 
@@ -29,10 +29,9 @@ ZmodemSession::~ZmodemSession()
     delete zmodemFileM;
     zmodemFileM = NULL;
 
-	delete inputFrameM;
-    inputFrameM = NULL;
-
     stopInputTimer();
+
+    std::cout << reportM.str();
 }
 
 //-----------------------------------------------------------------------------
@@ -42,7 +41,7 @@ void ZmodemSession::initState()
 	if (/*zmodemFileM ||*/ sendFinOnResetM){
 		delete zmodemFileM;
 		zmodemFileM = NULL;
-		if ((!isSzM) && inputFrameM->type == ZFIN){
+		if ((!isSzM) && inputFrameM.type == ZFIN){
 			g_stdout->sendData("OO", 2);
 		}else{
 			frame_t frame;
@@ -71,7 +70,7 @@ void ZmodemSession::initState()
 
 void ZmodemSession::parseFrame()
 {
-    if (inputFrameM->type == ZFIN && decodeIndexM + 2 >= bufferLenM
+    if (inputFrameM.type == ZFIN && decodeIndexM + 2 >= bufferLenM
             && bufferM[decodeIndexM] == 'O' && bufferM[decodeIndexM+1] == 'O'){
         asynHandleEvent(DESTROY_EVT);
         return;
@@ -98,6 +97,8 @@ void ZmodemSession::parseFrame()
         parseBinFrame();
 	}else if (ZBIN32 == frametype){
         parseBin32Frame();
+	}else if (ZBIN64 == frametype){
+        parseBin64Frame();
 	}else{
 		//LOG_SE_ERROR("only support(HEX,BIN,BIN32) frame");
 		handleEvent(RESET_EVT);
@@ -139,10 +140,11 @@ void ZmodemSession::parseHexFrame()
         return ;
     }
 	eatBuffer();
-	memcpy(inputFrameM, &frame, sizeof(frame_t));
+	memset(&inputFrameM, 0, sizeof(inputFrameM));
+	memcpy(&inputFrameM, &frame, 5);
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
-        << "got Hex frame:" << getTypeStr(inputFrameM->type));
+        << "got Hex frame:" << getTypeStr(inputFrameM.type));
 	handleEvent(HANDLE_FRAME_EVT);
 	return;
 }
@@ -166,10 +168,11 @@ void ZmodemSession::parseBinFrame()
         return ;
     }
 	eatBuffer();
-	memcpy(inputFrameM, &frame, sizeof(frame_t));
+	memset(&inputFrameM, 0, sizeof(inputFrameM));
+	memcpy(&inputFrameM, &frame, 5);
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
-        << "got Bin frame:" << getTypeStr(inputFrameM->type));
+        << "got Bin frame:" << getTypeStr(inputFrameM.type));
 	handleEvent(HANDLE_FRAME_EVT);
 	return;
 }
@@ -193,10 +196,39 @@ void ZmodemSession::parseBin32Frame()
         return ;
     }
 	eatBuffer();
-	memcpy(inputFrameM, &frame, sizeof(frame_t));
+	memset(&inputFrameM, 0, sizeof(inputFrameM));
+	memcpy(&inputFrameM, &frame, 5);
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
-        << "got Bin32 frame:" << getTypeStr(inputFrameM->type));
+        << "got Bin32 frame:" << getTypeStr(inputFrameM.type));
+	handleEvent(HANDLE_FRAME_EVT);
+	return;
+}
+
+//-----------------------------------------------------------------------------
+
+void ZmodemSession::parseBin64Frame()
+{
+	if (decodeIndexM + sizeof(frame64_t) > bufferLenM)
+		return;
+	frame64_t frame;
+	int frame_len = 0;
+	if (!decodeEscapeStruct<frame64_t>(decodeIndexM, frame_len, frame)){
+		return;
+	}
+	decodeIndexM += frame_len;
+
+    if (frame.crc != calcFrame64Crc32(&frame)){
+		LOG_SE_ERROR("bin32 crc error!");
+        handleEvent(RESET_EVT);
+        return ;
+    }
+	eatBuffer();
+	memset(&inputFrameM, 0, sizeof(inputFrameM));
+	memcpy(&inputFrameM, &frame, 9);
+    LOG_INFO(getSessionName() 
+        << "[" << getSessionId() << "] " << getCurState().getName() << " "
+        << "got Bin64 frame:" << getTypeStr(inputFrameM.type));
 	handleEvent(HANDLE_FRAME_EVT);
 	return;
 }
@@ -218,7 +250,7 @@ void ZmodemSession::sendZdata()
 	send_zsda32(buffer, len, frameend);
 		
 	if(!zmodemFileM->isGood()){
-		sendBin32FrameHeader(ZEOF, zmodemFileM->getPos());
+		checkSendFrameHeader(ZEOF, zmodemFileM->getPos());
 		return;
 	}else{
 		if (!isToDelete()) asynHandleEvent(SEND_ZDATA_EVT);
@@ -247,9 +279,22 @@ void ZmodemSession::sendFrame(frame_t& frame)
 	}
     g_stdout->sendData(buf, len);
 }
+
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendFrameHeader(unsigned char type, long pos)
+void ZmodemSession::checkSendFrameHeader(unsigned char type, uint64_t pos)
+{
+   if (pos >= 0x100000000) {
+       sendBin64FrameHeader(type, pos);
+   }
+   else{
+       sendFrameHeader(type, (uint32_t)pos);
+   }
+}
+
+//-----------------------------------------------------------------------------
+
+void ZmodemSession::sendFrameHeader(unsigned char type, uint32_t pos)
 {
 	frame_t frame;
     memset(&frame, 0, sizeof(frame_t));
@@ -263,16 +308,34 @@ void ZmodemSession::sendFrameHeader(unsigned char type, long pos)
 
 //-----------------------------------------------------------------------------
 
-void ZmodemSession::sendBin32FrameHeader(unsigned char type, long pos)
+void ZmodemSession::sendBin32FrameHeader(unsigned char type, uint32_t pos)
 {
 	frame32_t frame;
-    memset(&frame, 0, sizeof(frame_t));
+    memset(&frame, 0, sizeof(frame32_t));
     frame.type = type;
 	frame.flag[ZP0] = pos;
 	frame.flag[ZP1] = pos>>8;
 	frame.flag[ZP2] = pos>>16;
 	frame.flag[ZP3] = pos>>24;
     sendBin32Frame(frame);
+}
+
+//-----------------------------------------------------------------------------
+
+void ZmodemSession::sendBin64FrameHeader(unsigned char type, uint64_t pos)
+{
+	frame64_t frame;
+    memset(&frame, 0, sizeof(frame64_t));
+    frame.type = type;
+	frame.flag[ZP0] = pos;
+	frame.flag[ZP1] = pos>>8;
+	frame.flag[ZP2] = pos>>16;
+	frame.flag[ZP3] = pos>>24;
+	frame.flag[ZP4] = pos>>32;
+	frame.flag[ZP5] = pos>>40;
+	frame.flag[ZP6] = pos>>48;
+	frame.flag[ZP7] = pos>>56;
+    sendBin64Frame(frame);
 }
 
 //-----------------------------------------------------------------------------
@@ -292,6 +355,25 @@ void ZmodemSession::sendBin32Frame(frame32_t& frame)
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "sent Bin32 frame:" << getTypeStr(frame.type));
 }
+
+//-----------------------------------------------------------------------------
+
+void ZmodemSession::sendBin64Frame(frame64_t& frame)
+{
+    frame.crc = calcFrame64Crc32(&frame);
+
+    char buf[256] = {0};
+    int len = 0;
+    memcpy(buf+len, BIN64_PREFIX, 4);
+    len += 4;
+
+    len += convert2zline(buf+len, sizeof(buf) -len, (char*)&frame, sizeof(frame));
+    g_stdout->sendData(buf, len);
+    LOG_INFO(getSessionName() 
+        << "[" << getSessionId() << "] " << getCurState().getName() << " "
+        << "sent Bin32 frame:" << getTypeStr(frame.type));
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -388,7 +470,7 @@ int ZmodemSession::parseZdata()
 				if (calc_crc == recv_crc){
 					lastCheckExcapedM += 2 + consume_len;
 					dataCrcM = 0xFFFFFFFFL;
-					sendFrameHeader(ZACK, zmodemFileM->getPos());
+					checkSendFrameHeader(ZACK, zmodemFileM->getPos());
 					return ZCRCQ;
 				}else {
                     LOG_SE_ERROR("ZCRCQ crc error!");
@@ -433,6 +515,7 @@ void ZmodemSession::sendZrinit()
     memset(&frame, 0, sizeof(frame_t));
     frame.type = ZRINIT;
     frame.flag[ZF0] = CANFC32|CANFDX|CANOVIO;
+    frame.flag[ZF1] = g_options->rzDirModeM ? ZF1_RZ_DIR : 0;
     frame.flag[ZF3] = ZVERSION;
 	sendFrame(frame);
 }
@@ -441,15 +524,15 @@ void ZmodemSession::sendZrinit()
 
 void ZmodemSession::handleZfile()
 {
-    if (inputFrameM->type == ZCOMPL){
+    if (inputFrameM.type == ZCOMPL){
         asynHandleEvent(SKIP_EVT);
         return;
     }
-	if (inputFrameM->type != ZFILE){
+	if (inputFrameM.type != ZFILE){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
-    peerVersionM = inputFrameM->flag[ZF3];
+    peerVersionM = inputFrameM.flag[ZF3];
 
     if (bufferLenM - decodeIndexM > 1024){
         asynHandleEvent(DESTROY_EVT);
@@ -487,7 +570,7 @@ void ZmodemSession::handleZfile()
 		delete zmodemFileM;
 
 	zmodemFileM = new ZmodemFile("./", filename, fileinfo);
-	sendFrameHeader(ZRPOS, zmodemFileM->getPos());
+	checkSendFrameHeader(ZRPOS, zmodemFileM->getPos());
     asynHandleEvent(NEXT_EVT);
 }
 
@@ -535,7 +618,7 @@ uint32_t ZmodemSession::decodeCrc32(const int index, int& consume_len)
 
 void ZmodemSession::handleZdata()
 {
-	if (inputFrameM->type != ZDATA){
+	if (inputFrameM.type != ZDATA){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
@@ -619,7 +702,7 @@ void ZmodemSession::handleZdata()
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
                     eatBuffer();
-					sendFrameHeader(ZACK, zmodemFileM->getPos());
+					checkSendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
 				}
 
@@ -642,7 +725,7 @@ void ZmodemSession::handleZdata()
 					decodeIndexM = lastCheckExcapedM+1;
 					dataCrcM = 0xFFFFFFFFL;
                     eatBuffer();
-					sendFrameHeader(ZACK, zmodemFileM->getPos());
+					checkSendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
 				}
 			}else{
@@ -658,13 +741,6 @@ void ZmodemSession::handleZdata()
 	eatBuffer();
     // wait more data
 	return;
-}
-
-//-----------------------------------------------------------------------------
-
-void ZmodemSession::sendZrpos()
-{
-	sendFrameHeader(ZRPOS, zmodemFileM->getPos());
 }
 
 //-----------------------------------------------------------------------------
@@ -772,7 +848,7 @@ void ZmodemSession::sendZfin()
 
 void ZmodemSession::sendOO()
 {
-	if (inputFrameM->type != ZFIN){
+	if (inputFrameM.type != ZFIN){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
@@ -785,22 +861,22 @@ void ZmodemSession::sendOO()
 
 void ZmodemSession::handleZfileRsp()
 {
-    if (inputFrameM->type == ZSKIP){
+    if (inputFrameM.type == ZSKIP){
         asynHandleEvent(SKIP_EVT);
         return;
     }
-	if (inputFrameM->type != ZRPOS || zmodemFileM == NULL){
+	if (inputFrameM.type != ZRPOS || zmodemFileM == NULL){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
 
-    uint64_t pos = getPos(inputFrameM);
+    uint64_t pos = getPos(&inputFrameM);
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "got ZRPOS:" << pos);
 
     zmodemFileM->setPos(pos);
-    sendBin32FrameHeader(ZDATA, pos);
+    checkSendFrameHeader(ZDATA, pos);
     asynHandleEvent(SEND_ZDATA_EVT);
 }
 

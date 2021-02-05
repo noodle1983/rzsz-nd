@@ -8,14 +8,12 @@
 #include "zmodem.h"
 #include "ZmodemFile.h"
 #include <iostream>
+#include <sstream>
 #include <memory>
 #include <string>
 #include <fstream>
 #include <vector>
 #include <string.h>
-
-struct frame_tag;
-typedef struct frame_tag frame_t;
 
 class ZmodemSession: public nd::Session
 {
@@ -79,10 +77,13 @@ public:
 	size_t dataCrcMatched(const size_t begin);
 	uint16_t decodeCrc(const int index, int& consume_len);
 	uint32_t decodeCrc32(const int index, int& consume_len);
-	void sendFrameHeader(unsigned char type, long pos);
 	void sendFrame(frame_t& frame);
 	
-	void sendBin32FrameHeader(unsigned char type, long pos);
+    void checkSendFrameHeader(unsigned char type, uint64_t pos);
+	void sendFrameHeader(unsigned char type, uint32_t pos);
+	void sendBin64FrameHeader(unsigned char type, uint64_t pos);
+	void sendBin64Frame(frame64_t& frame);
+	void sendBin32FrameHeader(unsigned char type, uint32_t pos);
 	void sendBin32Frame(frame32_t& frame);
 	unsigned convert2zline(char* dest, const unsigned dest_size, 
 		const char* src, const unsigned src_len);
@@ -94,10 +95,10 @@ public:
 	void parseHexFrame();
 	void parseBinFrame();
 	void parseBin32Frame();
+	void parseBin64Frame();
 	void sendZrinit();
 	void handleZfile();
 	void handleZdata();
-	void sendZrpos();
 	void sendZfin();
 	void sendOO();
     void handleZfileRsp();
@@ -149,7 +150,7 @@ protected:
 	void output(const char* str, ...);
     int parseZdata();
 	
-	frame_t* inputFrameM;
+	frame64_t inputFrameM;
 	char bufferM[1024*16];
 	unsigned bufferLenM;
 	unsigned decodeIndexM;
@@ -166,6 +167,7 @@ protected:
     min_heap_item_t* inputTimerM;
 
     uint8_t peerVersionM;
+    std::stringstream reportM;
 };
 
 #endif /* ZMODEM_SESSION_H */
