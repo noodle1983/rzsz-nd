@@ -92,11 +92,12 @@ endef
 # $(2): source file
 # $(3): target file basename
 # $(4): compile flags
+# $(5): suffix
 define build_dependency
 	@echo "building dependancy for $(2)..."
-	@set -e; rm -f $(1) $(OUTDIR)/$(3).d; \
+	@set -e; rm -f $(1) $(OUTDIR)/$(3)$(5).d; \
 	($(CC) $(4) -MM -c $(2) > $(1) || rm -f $(1)) &&  \
-	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*.o $(1): ,g' <$(1) >$(OUTDIR)/$(3).d; 
+	sed 's,\(.*\)\.o[ :]*,$(OUTDIR)/$*$(5).o $(1): ,g' <$(1) >$(OUTDIR)/$(3)$(5).d; 
 endef
 
 #########################################
@@ -152,10 +153,10 @@ $(OUTSUBDIR):
 -include $(DEBUG_DEPENDFILES)
 -include $(DEBUG_EXEDEPENDFILES)
 $(OUTDIR)/%$(DEBUG_SUFFIX).d.tmp:%.cpp
-	$(call build_dependency,$@,$<,$*,$(CXXFLAGS)) # no blank between ,
+	$(call build_dependency,$@,$<,$*,$(CXXFLAGS),$(DEBUG_SUFFIX)) # no blank between ,
 
 $(OUTDIR)/%$(DEBUG_SUFFIX).d.tmp:%.c
-	$(call build_dependency,$@,$<,$*,$(CFLAGS)) # no blank between ,
+	$(call build_dependency,$@,$<,$*,$(CFLAGS),$(DEBUG_SUFFIX)) # no blank between ,
 
 $(OUTDIR)/%$(DEBUG_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
@@ -166,10 +167,10 @@ $(OUTDIR)/%$(DEBUG_SUFFIX).o:%.c $(DEPENDMAKEFILES)
 -include $(RELEASE_DEPENDFILES)
 -include $(RELEASE_EXEDEPENDFILES)
 $(OUTDIR)/%$(RELEASE_SUFFIX).d.tmp:%.cpp
-	$(call build_dependency,$@,$<,$*,$(CXXFLAGS)) # no blank between ,
+	$(call build_dependency,$@,$<,$*,$(CXXFLAGS),$(RELEASE_SUFFIX)) # no blank between ,
 
 $(OUTDIR)/%$(RELEASE_SUFFIX).d.tmp:%.c
-	$(call build_dependency,$@,$<,$*,$(CFLAGS)) # no blank between ,
+	$(call build_dependency,$@,$<,$*,$(CFLAGS),$(RELEASE_SUFFIX)) # no blank between ,
 
 $(OUTDIR)/%$(RELEASE_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
