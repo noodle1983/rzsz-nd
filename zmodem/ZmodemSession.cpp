@@ -288,7 +288,7 @@ void ZmodemSession::checkSendFrameHeader(unsigned char type, uint64_t pos)
        sendBin64FrameHeader(type, pos);
    }
    else{
-       sendFrameHeader(type, (uint32_t)pos);
+       sendBin32FrameHeader(type, (uint32_t)pos);
    }
 }
 
