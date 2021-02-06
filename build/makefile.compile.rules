@@ -125,15 +125,15 @@ $(RELEASE_SHARED_TARGET):release_depend $(RELEASE_OBJECTS)
 	$(call build_shared_lib,$@,$(RELEASE_OBJECTS)) # no blank between ,
 
 $(DEBUG_EXETARGET):$(DEBUG_STATIC_TARGET) debug_exedepend $(DEBUG_EXEOBJECTS)
-	@echo ""
 	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(DEBUG_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 	ln -sf $(EXE_OUTDIR)/$@ $(subst $(DEBUG_SUFFIX),,$@)
+	@echo ""
 
 $(RELEASE_EXETARGET):$(RELEASE_STATIC_TARGET) release_exedepend $(RELEASE_EXEOBJECTS)
-	@echo ""
 	$(CC) $(CXXFLAGS) $(OUTDIR)/$(EXEDIR)/$@.o $(RELEASE_OBJECTS) $(LDFLAGS) -o $(EXE_OUTDIR)/$@
 	strip $(EXE_OUTDIR)/$@
 	ln -sf $(EXE_OUTDIR)/$@ $(subst $(RELEASE_SUFFIX),,$@)
+	@echo ""
 
 $(OUTDIR):$(OUTDIR_PREFIX)
 	@if [ ! -d $@ ]; then mkdir -p $@; fi;
@@ -160,9 +160,11 @@ $(OUTDIR)/%$(DEBUG_SUFFIX).d.tmp:%.c
 
 $(OUTDIR)/%$(DEBUG_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
+	@echo ""
 
 $(OUTDIR)/%$(DEBUG_SUFFIX).o:%.c $(DEPENDMAKEFILES)
 	$(CC) $(CFLAGS) -c $< -o $@
+	@echo ""
 
 -include $(RELEASE_DEPENDFILES)
 -include $(RELEASE_EXEDEPENDFILES)
@@ -174,9 +176,11 @@ $(OUTDIR)/%$(RELEASE_SUFFIX).d.tmp:%.c
 
 $(OUTDIR)/%$(RELEASE_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	$(CC) $(CXXFLAGS) -c $< -o $@
+	@echo ""
 
 $(OUTDIR)/%$(RELEASE_SUFFIX).o:%.c $(DEPENDMAKEFILES)
 	$(CC) $(CFLAGS) -c $< -o $@
+	@echo ""
 
 debug_depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(DEBUG_DEPENDTARGET)
 debug_exedepend: $(OUTDIR) $(EXEOUTSUBDIR) $(EXE_OUTDIR) $(DEPENDMAKEFILES) $(DEBUG_EXEDEPENDTARGET)
