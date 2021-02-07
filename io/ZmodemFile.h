@@ -30,7 +30,7 @@ public:
 	void setWritePos(unsigned long long pos);
     uint64_t validateFileCrc(const char* fileLenAndCrc);
 
-	bool isGood(){return fileM.good();}
+	bool isGood(){return fileM.good() && fileM.is_open();}
 
 private:
 	bool parseInfo(const std::string& fileinfo);
