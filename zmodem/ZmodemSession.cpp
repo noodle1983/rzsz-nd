@@ -59,7 +59,6 @@ void ZmodemSession::initState()
 	lastCheckExcapedM = 0;
 	lastCheckExcapedSavedM = 0;
 	dataCrcM = 0xFFFFFFFFL;
-	recvLenM = 0;
 	lastEscapedM = false;
 	sendFinOnResetM = false;
 	//uploadFilePath_.clear();
@@ -278,6 +277,7 @@ void ZmodemSession::sendFrame(frame_t& frame)
 		buf[len++] = XON;
 	}
     g_stdout->sendData(buf, len);
+    LOG_SE_INFO("sent Hex frame:" << getTypeStr(frame.type));
 }
 
 //-----------------------------------------------------------------------------
@@ -351,9 +351,7 @@ void ZmodemSession::sendBin32Frame(frame32_t& frame)
 
     len += convert2zline(buf+len, sizeof(buf) -len, (char*)&frame, sizeof(frame));
     g_stdout->sendData(buf, len);
-    LOG_INFO(getSessionName() 
-        << "[" << getSessionId() << "] " << getCurState().getName() << " "
-        << "sent Bin32 frame:" << getTypeStr(frame.type));
+    LOG_SE_INFO("sent Bin32 frame:" << getTypeStr(frame.type));
 }
 
 //-----------------------------------------------------------------------------
@@ -369,9 +367,7 @@ void ZmodemSession::sendBin64Frame(frame64_t& frame)
 
     len += convert2zline(buf+len, sizeof(buf) -len, (char*)&frame, sizeof(frame));
     g_stdout->sendData(buf, len);
-    LOG_INFO(getSessionName() 
-        << "[" << getSessionId() << "] " << getCurState().getName() << " "
-        << "sent Bin32 frame:" << getTypeStr(frame.type));
+    LOG_SE_INFO("sent Bin32 frame:" << getTypeStr(frame.type));
 }
 
 
@@ -506,6 +502,38 @@ int ZmodemSession::parseZdata()
 	}
 	return 0;
 }
+//-----------------------------------------------------------------------------
+
+int ZmodemSession::parseZdataString()
+{
+    if (bufferLenM - decodeIndexM > 1024){
+        asynHandleEvent(DESTROY_EVT);
+        return -1;
+    }
+    int ret = parseZdata();
+    if (ret == 0) {return 0;}
+    if (ret < 0) {
+        asynHandleEvent(DESTROY_EVT);
+        return ret;
+    }
+
+    int nullCount = 0;
+    for(unsigned i = decodeIndexM; i < bufferLenM; i++){
+        if (bufferM[i] == 0){nullCount++;}
+    }
+    return nullCount;
+}
+
+//-----------------------------------------------------------------------------
+
+void ZmodemSession::parseZdataStringDone(){
+	decodeIndexM = lastCheckExcapedM;//crc len
+	if (*curBuffer() == XON){
+		decodeIndexM++;
+	}
+
+	eatBuffer();
+}
 
 //-----------------------------------------------------------------------------
 
@@ -534,37 +562,15 @@ void ZmodemSession::handleZfile()
     }
     peerVersionM = inputFrameM.flag[ZF3];
 
-    if (bufferLenM - decodeIndexM > 1024){
-        asynHandleEvent(DESTROY_EVT);
-        return;
-    }
-
-    int ret = parseZdata();
-    if (ret == 0) {return;}
-    if (ret < 0) {
-        asynHandleEvent(DESTROY_EVT);
-        return;
-    }
-
-    int nullCount = 0;
-    for(unsigned i = decodeIndexM; i < bufferLenM; i++){
-        if (bufferM[i] == 0){nullCount++;}
-        if (nullCount >= 2){break;}
-    }
-    if (nullCount < 2){return;}
+    int strCnt = parseZdataString();
+    if (strCnt < 2) {return;}
 
 	std::string filename(curBuffer());
 	decodeIndexM += filename.length() + 1;
 	std::string fileinfo(curBuffer());
 	decodeIndexM += fileinfo.length() + 1;
 
-	decodeIndexM = lastCheckExcapedM;//crc len
-	if (*curBuffer() == XON){
-		decodeIndexM++;
-	}
-
-	eatBuffer();
-	recvLenM = 0;
+    parseZdataStringDone();
 
 	if (zmodemFileM)
 		delete zmodemFileM;
@@ -861,11 +867,28 @@ void ZmodemSession::sendOO()
 
 void ZmodemSession::handleZfileRsp()
 {
+	if (zmodemFileM == NULL){
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
     if (inputFrameM.type == ZSKIP){
         asynHandleEvent(SKIP_EVT);
         return;
     }
-	if (inputFrameM.type != ZRPOS || zmodemFileM == NULL){
+
+    // validate existing file content
+    if (inputFrameM.type == ZCOMMAND && inputFrameM.flag[ZF0] == ZCMD_CHK_LAST_BREAK){
+        int strCnt = parseZdataString();
+        if (strCnt < 1) {return;}
+        uint64_t validLen = zmodemFileM->validateFileCrc(bufferM + decodeIndexM);
+        parseZdataStringDone();
+
+        checkSendFrameHeader(ZACK, validLen);
+        return;
+    }
+
+    // client requires data at pos
+	if (inputFrameM.type != ZRPOS){
         asynHandleEvent(DESTROY_EVT);
         return;
     }
@@ -875,7 +898,7 @@ void ZmodemSession::handleZfileRsp()
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "got ZRPOS:" << pos);
 
-    zmodemFileM->setPos(pos);
+    zmodemFileM->setReadPos(pos);
     checkSendFrameHeader(ZDATA, pos);
     asynHandleEvent(SEND_ZDATA_EVT);
 }

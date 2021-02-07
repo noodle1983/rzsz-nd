@@ -117,7 +117,18 @@ the following flags, if not specified, are not implemented yet in rzsz-nd.
 /* Parameters for ZCOMMAND frame ZF0 (otherwise 0) */
 #define ZCACK1	1	/* Acknowledge, then do command */
 
-#define ZCMD_RZ_PRE_SET_PATH 2 /*rzsz-nd Version 1, followed by paths(file or dir, split by semicolon) on client, skipping the file selection*/
+/** 
+ * involved in rzsz-nd Version 1
+ * the file receiver responses to ZFILE with the existing file length and CRC32
+ * the file sender verifies the content, and resumes from the length or start at the beginning.
+ **/
+#define ZCMD_CHK_LAST_BREAK 2
+/**
+ * involved in rzsz-nd Version 1
+ * followed by paths(file or dir, split by semicolon) on client
+ * skipping the file selection
+ **/
+#define ZCMD_RZ_PRE_SET_PATH 3
 
 /******************************
  *enum
@@ -234,6 +245,7 @@ extern unsigned char zsendline_tab[256];
 void initZmodemTab();
 
 void waitUntilWritable(int fd);
+
 
 #endif /* ZMODEM_H */
 

@@ -1,5 +1,6 @@
 #include "ZmodemFile.h"
 #include "Log.h"
+#include "crctab.h"
 #include <stdio.h>
 #include <assert.h>
 #include <sys/stat.h>
@@ -55,7 +56,7 @@ ZmodemFile::ZmodemFile(
 {
 	parseInfo(fileinfo);
 
-	std::string fullPathM = dir + "/" + filename;
+	fullPathM = dir + "/" + filename;
 	unsigned found = fullPathM.find_last_of("/\\");
 	createDir(fullPathM.substr(0,found));
 	fileM.open(fullPathM.c_str(), std::fstream::out|std::fstream::binary|std::fstream::trunc);
@@ -99,6 +100,30 @@ bool ZmodemFile::parseInfo(const std::string& fileinfo)
 	return 1;
 }
 
+uint64_t ZmodemFile::validateFileCrc(const char* fileLenAndCrc)
+{
+    uint64_t existLen = 0;
+    uint32_t existCrc = 0;
+	sscanf(fileLenAndCrc, "%llu %u", (unsigned long long*)&existLen, &existCrc);
+
+    if (existLen > fileSizeM){return 0;}
+
+    uint32_t crc = 0xFFFFFFFFL;
+	std::ifstream stream(fullPathM, std::fstream::in | std::fstream::binary);
+	if (!stream.good()) { return 0; }
+
+	uint64_t len = 0;
+	unsigned char ch = 0;
+	while (stream.read((char*)&ch, 1) && len < existLen) {
+		crc = UPDC32(ch, crc);
+		len++;
+	}
+    crc = ~crc;;
+    if (crc != existCrc) {return 0;}
+
+	return existLen;
+}
+
 ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& rePath, unsigned long long filesize, unsigned long long filetime)
 	: fileM(filepath.c_str(), std::fstream::in|std::fstream::binary),
 	fullPathM(filepath),
@@ -119,12 +144,20 @@ unsigned ZmodemFile::read(char*buf, unsigned size)
 	return rlen;
 }
 
-void ZmodemFile::setPos(unsigned long long pos)
+void ZmodemFile::setReadPos(unsigned long long pos)
 {
 	if (pos > fileSizeM)
 		return;
 
 	fileM.seekg(pos);
+	posM = pos;
+}
+
+void ZmodemFile::setWritePos(unsigned long long pos)
+{
+	if (pos > fileSizeM)
+		return;
+
 	posM = pos;
 }
 

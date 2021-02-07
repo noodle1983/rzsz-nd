@@ -26,7 +26,9 @@ public:
             unsigned long long filesize,
             unsigned long long filetime);
 	unsigned read(char*buf, unsigned size);
-	void setPos(unsigned long long pos);
+	void setReadPos(unsigned long long pos);
+	void setWritePos(unsigned long long pos);
+    uint64_t validateFileCrc(const char* fileLenAndCrc);
 
 	bool isGood(){return fileM.good();}
 

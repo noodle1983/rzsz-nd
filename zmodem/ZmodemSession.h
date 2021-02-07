@@ -149,6 +149,8 @@ public:
 protected:
 	void output(const char* str, ...);
     int parseZdata();
+    int parseZdataString();
+    void parseZdataStringDone();
 	
 	frame64_t inputFrameM;
 	char bufferM[1024*16];
@@ -157,7 +159,6 @@ protected:
 	unsigned lastCheckExcapedM;
 	unsigned lastCheckExcapedSavedM;
 	uint32_t dataCrcM;
-	int recvLenM;
 	bool lastEscapedM;
 
 	bool sendFinOnResetM;

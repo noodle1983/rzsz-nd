@@ -54,6 +54,8 @@ nd::FiniteStateMachine* SzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(SKIP_EVT,          CHANGE_STATE(SEND_ZRQINIT_STATE));
         (*fsm) +=      FSM_EVENT(SEND_ZDATA_EVT,    CHANGE_STATE(SEND_ZDATA_STATE));
+        (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, parseFrame));
+        (*fsm) +=      FSM_EVENT(HANDLE_FRAME_EVT,  CHANGE_STATE(HANDLE_ZFILE_RSP_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
         (*fsm) += FSM_STATE(SEND_ZDATA_STATE);
@@ -194,7 +196,7 @@ void SzSession::sendZfile()
     //Pathname\0Length ModificationDate FileMode SerialNumber NumberOfFilesRemaining NumberOfBytesRemaining FileType
 	send_zsda32(filedata, filedata_len, ZCRCW);
 
-    LOG_SE_INFO("send ZFILE. filename:" << basename << ", file info:" << filedata[basename.length() + 1])
+    LOG_SE_INFO("send ZFILE. filename:" << basename << ", file info:" << (filedata + basename.length() + 1));
 }
 
 //-----------------------------------------------------------------------------
