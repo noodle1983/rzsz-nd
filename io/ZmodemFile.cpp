@@ -113,11 +113,15 @@ uint64_t ZmodemFile::validateFileCrc(const char* fileLenAndCrc)
 	if (!stream.good()) { return 0; }
 
 	uint64_t len = 0;
-	unsigned char ch = 0;
-	while (stream.read((char*)&ch, 1) && len < existLen) {
-		crc = UPDC32(ch, crc);
-		len++;
-	}
+    char buffer[4096] = { 0 };
+    do{
+		stream.read(buffer, sizeof(buffer));
+		unsigned readed = stream.gcount();
+		for (unsigned i = 0; i < readed && len < existLen; i++) {
+			crc = UPDC32(buffer[i], crc);
+            len++;
+		}
+	} while (stream.good());
     crc = ~crc;;
     if (crc != existCrc) {return 0;}
 
