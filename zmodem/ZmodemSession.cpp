@@ -576,8 +576,63 @@ void ZmodemSession::handleZfile()
 		delete zmodemFileM;
 
 	zmodemFileM = new ZmodemFile("./", filename, fileinfo);
+    uint32_t existCrc = 0;
+	uint64_t len = zmodemFileM->getExistLen(existCrc);
+	if (len > 0 && peerVersionM > 0) {
+		frame32_t frame;
+		memset(&frame, 0, sizeof(frame));
+		frame.type = ZCOMMAND;
+		frame.flag[ZF0] = ZCMD_CHK_LAST_BREAK;	/* file conversion request */
+		sendBin32Frame(frame);
+		char info[1024] = { 0 };
+		memset(info, 0, sizeof(info));
+		snprintf(info, sizeof(info), "%llu %u", (long long unsigned)len, existCrc);
+		send_zsda32(info, strlen(info) + 1, ZCRCW);
+        asynHandleEvent(NEXT_EVT);
+		return;
+	}
+
+    zmodemFileM->openWrite(false);
 	checkSendFrameHeader(ZRPOS, zmodemFileM->getPos());
     asynHandleEvent(NEXT_EVT);
+}
+
+//-----------------------------------------------------------------------------
+
+void ZmodemSession::waitZdata()
+{
+    if (inputFrameM.type == ZDATA){
+        handleEvent(NEXT_EVT);
+        return;
+    }
+    if (inputFrameM.type == ZFILE){
+        asynHandleEvent(SKIP_EVT);
+        return;
+    }
+    if (inputFrameM.type == ZCOMPL){
+        return;
+    }
+	if (inputFrameM.type != ZACK){
+        asynHandleEvent(DESTROY_EVT);
+        return;
+    }
+
+    uint64_t pos = getPos(&inputFrameM);
+    if (zmodemFileM != NULL && !zmodemFileM->isGood() && pos < zmodemFileM->getSize()) {
+        zmodemFileM->openWrite(pos > 0);
+        if (pos > 0) {
+            zmodemFileM->setWritePos(pos);
+        }
+        checkSendFrameHeader(ZRPOS, zmodemFileM->getPos());
+        return;
+    }
+    else if (zmodemFileM != NULL && !zmodemFileM->isGood() && pos == zmodemFileM->getSize()) {
+        checkSendFrameHeader(ZSKIP, 0);
+        return;
+    }
+
+    zmodemFileM->openWrite(false);
+	checkSendFrameHeader(ZRPOS, zmodemFileM->getPos());
 }
 
 //-----------------------------------------------------------------------------

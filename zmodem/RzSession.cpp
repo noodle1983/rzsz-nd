@@ -45,7 +45,9 @@ nd::FiniteStateMachine* RzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, parseFrame));
-        (*fsm) +=      FSM_EVENT(HANDLE_FRAME_EVT,  CHANGE_STATE(HANDLE_ZDATA_STATE));
+        (*fsm) +=      FSM_EVENT(HANDLE_FRAME_EVT,  SE_FUNC(ZmodemSession, waitZdata));
+        (*fsm) +=      FSM_EVENT(NEXT_EVT,          CHANGE_STATE(HANDLE_ZDATA_STATE));
+        (*fsm) +=      FSM_EVENT(SKIP_EVT,          CHANGE_STATE(HANDLE_ZFILE_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
         (*fsm) += FSM_STATE(HANDLE_ZDATA_STATE);

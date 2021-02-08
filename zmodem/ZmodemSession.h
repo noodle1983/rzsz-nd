@@ -102,6 +102,7 @@ public:
 	void sendZfin();
 	void sendOO();
     void handleZfileRsp();
+    void waitZdata();
 
 	static void deleteSelf(nd::Session* session);
 

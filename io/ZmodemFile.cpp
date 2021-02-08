@@ -57,14 +57,42 @@ ZmodemFile::ZmodemFile(
 	parseInfo(fileinfo);
 
 	fullPathM = dir + "/" + filename;
-	unsigned found = fullPathM.find_last_of("/\\");
-	createDir(fullPathM.substr(0,found));
-	fileM.open(fullPathM.c_str(), std::fstream::out|std::fstream::binary|std::fstream::trunc);
 }
 
 ZmodemFile::~ZmodemFile()
 {
 	fileM.close();
+}
+
+uint64_t ZmodemFile::getExistLen(uint32_t& crc)
+{
+    crc = 0xFFFFFFFFL;
+	std::ifstream stream(fullPathM, std::fstream::in | std::fstream::binary);
+	if (!stream.good()) { return 0; }
+
+	uint64_t len = 0;
+	char buffer[4096] = { 0 };
+	do{
+		stream.read(buffer, sizeof(buffer));
+		unsigned readed = stream.gcount();
+		for (unsigned i = 0; i < readed; i++) {
+			crc = UPDC32(buffer[i], crc);
+		}
+		len += readed;
+	} while (stream.good());
+    crc = ~crc;;
+	stream.close();
+	return len;
+}
+
+void ZmodemFile::openWrite(bool resume)
+{
+    unsigned found = fullPathM.find_last_of("/\\");
+	createDir(fullPathM.substr(0,found));
+
+	if (fileM.is_open()) { fileM.close(); }
+	auto exflag = resume ? std::fstream::app : std::fstream::trunc;
+	fileM.open(fullPathM.c_str(), std::fstream::out|std::fstream::binary|exflag);
 }
 
 bool ZmodemFile::write(const char* buf, unsigned long long len)
