@@ -610,6 +610,7 @@ void ZmodemSession::waitZdata()
         return;
     }
     if (inputFrameM.type == ZCOMPL){
+        asynHandleEvent(NETWORK_INPUT_EVT);
         return;
     }
 	if (inputFrameM.type != ZACK){
