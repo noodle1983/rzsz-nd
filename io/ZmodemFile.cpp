@@ -129,12 +129,11 @@ uint64_t ZmodemFile::validateFileCrc(const char* fileLenAndCrc)
 }
 
 ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& rePath, unsigned long long filesize, unsigned long long filetime)
-	: fileM(filepath.c_str(), std::fstream::in|std::fstream::binary),
-	fullPathM(filepath),
-	fileNameM(rePath),
-	fileSizeM(filesize),
-	fileTimeM(filetime),
-	posM(0)
+	: fullPathM(filepath)
+	, fileNameM(rePath)
+	, fileSizeM(filesize)
+	, fileTimeM(filetime)
+	, posM(0)
 {
 }
 
@@ -150,6 +149,9 @@ unsigned ZmodemFile::read(char*buf, unsigned size)
 
 void ZmodemFile::setReadPos(unsigned long long pos)
 {
+    if (!fileM.is_open()){
+        fileM.open(fullPathM, std::fstream::in|std::fstream::binary);
+    }
 	if (pos > fileSizeM)
 		return;
 
