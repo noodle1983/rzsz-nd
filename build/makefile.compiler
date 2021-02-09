@@ -12,10 +12,10 @@ CXXFLAGS= -std=c++17 $(CFLAGS)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-	SHARED_LIB += -lrt -lpthread
+	SHARED_LIB += -lrt -lpthread -lstdc++fs
 endif
 ifeq ($(UNAME_S),Darwin)
-	SHARED_LIB += -lpthread
+	SHARED_LIB += -lpthread -lstdc++fs
 endif
 DEBUG_LDFLAGS= -fsanitize=address -fno-omit-frame-pointer
 RELEASE_LDFLAGS=
