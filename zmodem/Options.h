@@ -27,7 +27,7 @@ public:
         , clientWorkingDirM("c","client-working-dir", "Depending on ZVERSION>0, set the working directory on the client side. It is desktop if not set.",
                 false, "", "directory path") 
         , serverWorkingDirM("s","server-working-dir", "Depending on ZVERSION>0, set the working directory on the server side. It is current directory if not set.",
-                false, "", "directory path") 
+                false, "./", "directory path") 
         , rzDirModeM(false)
     {
 

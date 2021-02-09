@@ -575,7 +575,7 @@ void ZmodemSession::handleZfile()
 	if (zmodemFileM)
 		delete zmodemFileM;
 
-	zmodemFileM = new ZmodemFile("./", filename, fileinfo);
+	zmodemFileM = new ZmodemFile(g_options->getServerWorkingDir(), filename, fileinfo);
     uint32_t existCrc = 0;
 	uint64_t len = zmodemFileM->getExistLen(existCrc);
 	if (len > 0 && peerVersionM > 0) {

@@ -41,7 +41,7 @@ void Options::addFiles(TCLAP::UnlabeledMultiArg<string>& optionsFiles)
     // 1. the relative path
     auto files = optionsFiles.getValue();
     for(auto f : files){
-        fs::path fsPath = fs::absolute(f);
+        fs::path fsPath = fs::absolute(getServerWorkingDir() + "/" + f);
         if(!fs::exists(fsPath)){
             cerr << "file does not exist:" << f << endl;
             exit(-1);
