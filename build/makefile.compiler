@@ -12,11 +12,14 @@ CXXFLAGS= -std=c++17 $(CFLAGS)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-	SHARED_LIB += -lrt -lpthread -lstdc++fs
+	SHARED_LIB+= -lrt -lpthread -lstdc++fs
 endif
 ifeq ($(UNAME_S),Darwin)
-	SHARED_LIB += -lpthread -lstdc++fs
+	CFLAGS+= -Dst_mtim=st_mtimespec
+	CXXFLAGS+= -Dst_mtim=st_mtimespec
+	SHARED_LIB+= -lpthread
 endif
+
 DEBUG_LDFLAGS= -fsanitize=address -fno-omit-frame-pointer
 RELEASE_LDFLAGS=
 LDFLAGS= $(SHARED_LIB_DIR) $(SHARED_LIB) $(STATIC_LIB)
