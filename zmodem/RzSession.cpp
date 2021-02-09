@@ -19,9 +19,10 @@ nd::FiniteStateMachine* RzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,      SE_FUNC(ZmodemSession, initState));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,      SE_FUNC(RzSession, sendLeadingMsg));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,      CHANGE_STATE(SEND_ZRINIT_STATE));
+        (*fsm) +=      FSM_EVENT(EXIT_EVT,       SE_FUNC(ZmodemSession, sendClientWorkingDir));
+        (*fsm) +=      FSM_EVENT(EXIT_EVT,       SE_FUNC(RzSession, sendPresetFiles));
 
         (*fsm) += FSM_STATE(SEND_ZRINIT_STATE);
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(ZmodemSession, sendClientWorkingDir));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(ZmodemSession, sendZrinit));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(60000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
@@ -109,6 +110,16 @@ void RzSession::sendLeadingMsg()
 {
     const char* msg = "rz waiting to receive.\r";
     g_stdout->sendData(msg, strlen(msg));
+}
+
+//-----------------------------------------------------------------------------
+
+void RzSession::sendPresetFiles()
+{
+    auto presetFiles = g_options->getPresetRzFiles();
+    if(presetFiles.empty()){return;}
+
+    sendZCommand(ZCMD_RZ_PRESET_PATHS, "%s", presetFiles.c_str());
 }
 
 //-----------------------------------------------------------------------------

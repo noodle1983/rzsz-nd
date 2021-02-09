@@ -24,11 +24,13 @@ public:
         : debugArgM("d", "debug", "set debug level. 0: TRACE; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR; 5: FATAL;",
                 false, DEFAULT_LOG_LEVEL, "int:0-5")
         , logFileArgM("l","log", "File to log", false, "./zmodem.log", "filename") 
-        , clientWorkingDirM("c","client-working-dir", "Depending on ZVERSION>0, set the working directory on the client side. It is desktop if not set.",
+        , clientWorkingDirM("c","client-working-dir", "Depending on ZVERSION:1, set the working directory on the client side. It is desktop if not set.",
                 false, "", "directory path") 
-        , serverWorkingDirM("s","server-working-dir", "Depending on ZVERSION>0, set the working directory on the server side. It is current directory if not set.",
+        , serverWorkingDirM("s","server-working-dir", "Depending on ZVERSION:1, set the working directory on the server side. It is current directory if not set.",
                 false, "./", "directory path") 
         , rzDirModeM(false)
+        , presetRzFilesM("p","preset-files", "Depending on ZVERSION:1, preset rz files splited by '#' to skip file selection",
+                false, "", "directory/file path") 
     {
 
     }
@@ -39,6 +41,7 @@ public:
     const std::string& getLogfile(){return logFileArgM.getValue();}
     const std::string& getClientWorkingDir(){return clientWorkingDirM.getValue();}
     const std::string& getServerWorkingDir(){return serverWorkingDirM.getValue();}
+    const std::string& getPresetRzFiles(){return presetRzFilesM.getValue();}
     void addCommonOptions(TCLAP::CmdLine& cmd){
         cmd.add(debugArgM);
         cmd.add(logFileArgM);
@@ -60,7 +63,7 @@ public:
 
     // rz files
     bool rzDirModeM;
-    std::vector<std::string> rzFiles;
+    TCLAP::ValueArg<std::string> presetRzFilesM;
 };
 
 #define g_options nd::Singleton<nd::Options>::instance()

@@ -12,6 +12,7 @@ public:
 	virtual ~RzSession();
 
 	void sendLeadingMsg();
+    void sendPresetFiles();
 
 private:
 };

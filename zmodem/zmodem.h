@@ -130,10 +130,10 @@ the following flags, if not specified, are not implemented yet in rzsz-nd.
 #define ZCMD_SET_CLIENT_WORKDIR 3
 /**
  * involved in rzsz-nd Version 1
- * followed by paths(file or dir, split by semicolon) on client
+ * followed by paths(file or dir, splited by '#' on client
  * skipping the file selection
  **/
-#define ZCMD_RZ_PRE_SET_PATH 4
+#define ZCMD_RZ_PRESET_PATHS 4
 
 /******************************
  *enum

@@ -25,9 +25,9 @@ nd::FiniteStateMachine* SzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,    CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,       CANCEL_TIMER());
         (*fsm) +=      FSM_EVENT(EXIT_EVT,       SE_FUNC(SzSession, sendLeadingMsg));
+        (*fsm) +=      FSM_EVENT(EXIT_EVT,       SE_FUNC(ZmodemSession, sendClientWorkingDir));
 
         (*fsm) += FSM_STATE(SEND_ZRQINIT_STATE);
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(ZmodemSession, sendClientWorkingDir));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(SzSession, sendZrqinit));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
