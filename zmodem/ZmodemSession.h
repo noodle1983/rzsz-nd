@@ -89,6 +89,7 @@ public:
 		const char* src, const unsigned src_len);
 	void send_zsda32(char *buf, size_t length, char frameend);
 	void sendZdata();
+    void sendZCommand(char command, const char* format, ...);
 
 	void checkIfStartRz();
 	void parseFrame();
@@ -103,6 +104,7 @@ public:
 	void sendOO();
     void handleZfileRsp();
     void waitZdata();
+    void sendClientWorkingDir();
 
 	static void deleteSelf(nd::Session* session);
 

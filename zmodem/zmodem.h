@@ -125,10 +125,15 @@ the following flags, if not specified, are not implemented yet in rzsz-nd.
 #define ZCMD_CHK_LAST_BREAK 2
 /**
  * involved in rzsz-nd Version 1
+ * sent as the very first frame of sz/rz, followed by the dir string in ZDATA
+ **/
+#define ZCMD_SET_CLIENT_WORKDIR 3
+/**
+ * involved in rzsz-nd Version 1
  * followed by paths(file or dir, split by semicolon) on client
  * skipping the file selection
  **/
-#define ZCMD_RZ_PRE_SET_PATH 3
+#define ZCMD_RZ_PRE_SET_PATH 4
 
 /******************************
  *enum

@@ -24,6 +24,10 @@ public:
         : debugArgM("d", "debug", "set debug level. 0: TRACE; 1: DEBUG; 2: INFO; 3: WARN; 4: ERROR; 5: FATAL;",
                 false, DEFAULT_LOG_LEVEL, "int:0-5")
         , logFileArgM("l","log", "File to log", false, "./zmodem.log", "filename") 
+        , clientWorkingDirM("c","client-working-dir", "Depending on ZVERSION>0, set the working directory on the client side. It is desktop if not set.",
+                false, "", "directory path") 
+        , serverWorkingDirM("s","server-working-dir", "Depending on ZVERSION>0, set the working directory on the server side. It is current directory if not set.",
+                false, "", "directory path") 
         , rzDirModeM(false)
     {
 
@@ -33,9 +37,13 @@ public:
 
     unsigned getDebugLevel(){return debugArgM.getValue();}
     const std::string& getLogfile(){return logFileArgM.getValue();}
+    const std::string& getClientWorkingDir(){return clientWorkingDirM.getValue();}
+    const std::string& getServerWorkingDir(){return serverWorkingDirM.getValue();}
     void addCommonOptions(TCLAP::CmdLine& cmd){
         cmd.add(debugArgM);
         cmd.add(logFileArgM);
+        cmd.add(clientWorkingDirM);
+        cmd.add(serverWorkingDirM);
     }
 
     void addFiles(TCLAP::UnlabeledMultiArg<std::string>& optionsFiles);
@@ -44,12 +52,15 @@ public:
     // common
     TCLAP::ValueArg<unsigned> debugArgM;
     TCLAP::ValueArg<std::string> logFileArgM;
+    TCLAP::ValueArg<std::string> clientWorkingDirM;
+    TCLAP::ValueArg<std::string> serverWorkingDirM;
 
     // sz files
     std::vector<ZmodemFile*> filesM;
 
     // rz files
     bool rzDirModeM;
+    std::vector<std::string> rzFiles;
 };
 
 #define g_options nd::Singleton<nd::Options>::instance()

@@ -579,15 +579,7 @@ void ZmodemSession::handleZfile()
     uint32_t existCrc = 0;
 	uint64_t len = zmodemFileM->getExistLen(existCrc);
 	if (len > 0 && peerVersionM > 0) {
-		frame32_t frame;
-		memset(&frame, 0, sizeof(frame));
-		frame.type = ZCOMMAND;
-		frame.flag[ZF0] = ZCMD_CHK_LAST_BREAK;	/* file conversion request */
-		sendBin32Frame(frame);
-		char info[1024] = { 0 };
-		memset(info, 0, sizeof(info));
-		snprintf(info, sizeof(info), "%llu %u", (long long unsigned)len, existCrc);
-		send_zsda32(info, strlen(info) + 1, ZCRCW);
+        sendZCommand(ZCMD_CHK_LAST_BREAK, "%llu %u",  (long long unsigned)len, existCrc);
         asynHandleEvent(NEXT_EVT);
 		return;
 	}
@@ -960,4 +952,33 @@ void ZmodemSession::handleZfileRsp()
 }
 
 //-----------------------------------------------------------------------------
+
+void ZmodemSession::sendZCommand(char command, const char* format, ...)
+{
+    char buffer[1024];
+    memset(buffer, 0, sizeof(buffer));
+
+   	va_list ap;
+	va_start(ap, format);
+	vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
+	va_end(ap);
+
+
+    frame32_t frame;
+    memset(&frame, 0, sizeof(frame));
+    frame.type = ZCOMMAND;
+    frame.flag[ZF0] = command;
+    sendBin32Frame(frame);
+    send_zsda32(buffer, strlen(buffer) + 1, ZCRCW);
+}
+
+//-----------------------------------------------------------------------------
+
+void ZmodemSession::sendClientWorkingDir()
+{
+    auto clientWorkingDir = g_options->getClientWorkingDir();
+    if(clientWorkingDir.empty()){return;}
+
+    sendZCommand(ZCMD_SET_CLIENT_WORKDIR, "%s", clientWorkingDir.c_str());
+}
 
