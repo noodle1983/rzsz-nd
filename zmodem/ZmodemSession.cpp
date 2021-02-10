@@ -18,7 +18,6 @@
 
 ZmodemSession::ZmodemSession(nd::FiniteStateMachine* fsm)
 	: nd::Session(fsm, 0)
-	, lastEscapedM(false)
     , zmodemFileM(NULL)
     , inputTimerM(NULL)
     , peerVersionM(0)
@@ -66,7 +65,6 @@ void ZmodemSession::initState()
 	lastCheckExcapedM = 0;
 	lastCheckExcapedSavedM = 0;
 	dataCrcM = 0xFFFFFFFFL;
-	lastEscapedM = false;
 	sendFinOnResetM = false;
 	//uploadFilePath_.clear();
 	return;

@@ -28,21 +28,15 @@ public:
 	enum MyState
 	{
 		IDLE_STATE = 1,
-		CHK_FRAME_TYPE_STATE,
         HANDLE_ZFILE_RSP_STATE,
-		WAIT_DATA_STATE,
-		FILE_SELECTED_STATE,
 		SEND_ZDATA_STATE,
 		WAIT_ZDATA_STATE,
 		HANDLE_ZDATA_STATE,
 		ZEOF_STATE,
-		FILE_COMPLETED_STATE,
-		SEND_FLOW_CTRL_STATE,
         SEND_ZRQINIT_STATE,
         SEND_ZRINIT_STATE,
 		SEND_ZFILE_STATE,
         HANDLE_ZFILE_STATE,
-        CHECK_POS_STATE,
 		DESTROY_STATE,
 		END_STATE
 	};
@@ -50,26 +44,13 @@ public:
 	{
 		NETWORK_INPUT_EVT = 0,
 		RESET_EVT,
-		PARSE_HEX_EVT,
-		PARSE_BIN_EVT,
-		PARSE_BIN32_EVT,
 		HANDLE_FRAME_EVT,
-		WAIT_DATA_EVT,
-		FILE_SELECTED_EVT,
 		SEND_ZDATA_EVT,
 		SEND_ZDATA_LATER_EVT,
 		DESTROY_EVT,
 		SKIP_EVT,
-		CHECK_FRAME_TYPE_EVT,
 		SEND_FILE_EVT,
 	};
-	typedef enum{
-		DECODE_ERROR  = -1,
-		DECODE_DONE   = 0,
-		DECODE_PARTLY = 1
-	} DecodeResult;
-
-	enum FileSelectState{FILE_SELECT_NONE = 0, FILE_SELECTED, FILE_SELECTING};
 
 	ZmodemSession(nd::FiniteStateMachine* fsm);
 	virtual ~ZmodemSession();
@@ -81,7 +62,6 @@ public:
 	void reset();
 	void destroy();
 
-	size_t dataCrcMatched(const size_t begin);
 	uint16_t decodeCrc(const int index, int& consume_len);
 	uint32_t decodeCrc32(const int index, int& consume_len);
 	void sendFrame(frame_t& frame);
@@ -169,7 +149,6 @@ protected:
 	unsigned lastCheckExcapedM;
 	unsigned lastCheckExcapedSavedM;
 	uint32_t dataCrcM;
-	bool lastEscapedM;
 
 	bool sendFinOnResetM;
 	bool isSzM;
