@@ -7,6 +7,8 @@ I have some tools on hand, the FSM and the multi-jobs Processor in C++. So it is
 
 As it is a long time after the ZMODEM protocol was invented, rzsz-nd starts from a basic feature, which is sending/receiving plain file in ZMODEM, without any conversion and encryption. For the other features in ZMODEM or YMODEM/XMODEM, will be gone with the wind if no one bring it back in the future. I have implemented some more features and protocol extensions, which are detailed in the following chapter.
 
+All the sequence diagrams are written in [mermaid](https://mermaid-js.github.io/mermaid/#/). A better formatted version of this file can be reached via [my blog](https://noodle1983.github.io/2021/02/12/rzsz-nd_README/).
+
 # 2. Features
 
 ## 2.1. Normal Zmodem Workflow
@@ -14,7 +16,7 @@ The original ZMODEM protocol is available via the [link](http://gallium.inria.fr
 
 ### sz workflow
 
-```
+```mermaid
 sequenceDiagram
 participant client
 participant server
@@ -32,7 +34,7 @@ client->>server: FIN
 ```
 
 ### rz workflow
-```
+```mermaid
 sequenceDiagram
 participant client
 participant server
@@ -52,7 +54,7 @@ The feature is already supported in the ZMODEM protocol. I just send the relativ
 
 ### sz workflow
 
-```
+```mermaid
 sequenceDiagram
 participant client
 participant server
@@ -71,7 +73,7 @@ client->>server: FIN
 
 
 ### rz workflow
-```
+```mermaid
 sequenceDiagram
 participant client
 participant server
@@ -104,7 +106,7 @@ typedef struct frame64_tag frame64_t;
 2 extra messages ZCOMMAND(ZCOMMAND_CHECK_LEN) and ZACK(pos) are involved.
 
 ### sz workflow
-```
+```mermaid
 sequenceDiagram
 participant client
 participant server
@@ -128,7 +130,7 @@ client->>server: FIN
 ```
 
 ### rz workflow
-```
+```mermaid
 sequenceDiagram
 participant client
 participant server
