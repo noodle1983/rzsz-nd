@@ -24,6 +24,7 @@ Session::Session(
     , endStateIdM(theFsm->getLastStateId())
     , timerIdM(0)
     , fsmM(theFsm)
+    , prevTimerIntervalM(0)
     , fsmTimerM(NULL)
     , sessionIdM(theSessionId)
 {
@@ -39,6 +40,7 @@ Session::Session()
     , endStateIdM(0)
     , timerIdM(0)
     , fsmM(NULL)
+    , prevTimerIntervalM(0)
     , fsmTimerM(NULL)
     , sessionIdM(0)
 {
@@ -57,6 +59,7 @@ void Session::init(
     curStateIdM = fsmM->getFirstStateId();
     endStateIdM = fsmM->getLastStateId();
     timerIdM = 0;
+    prevTimerIntervalM = 0;
     g_processor->cancelLocalTimer(fsmTimerM);
 }
 
@@ -174,6 +177,11 @@ void onSessionTimerout(void *arg)
 
 void Session::newTimer(const long theMsec)
 {
+    if (theMsec <= 0) {
+        handleTimeout();
+        return;
+    }
+    prevTimerIntervalM = theMsec;
     g_processor->cancelLocalTimer(fsmTimerM);
 	fsmTimerM = g_processor->addLocalTimer(theMsec, onSessionTimerout, this);
 }
@@ -184,6 +192,18 @@ void Session::cancelTimer()
 {
     g_processor->cancelLocalTimer(fsmTimerM);
 }
+
+//-----------------------------------------------------------------------------
+
+void Session::resetTimer()
+{
+    if (fsmTimerM != NULL)
+    {
+        cancelTimer();
+        newTimer(prevTimerIntervalM);
+    }
+}
+
 
 //-----------------------------------------------------------------------------
 

@@ -48,6 +48,7 @@ namespace nd
         void newTimer(const long theMsec);
         void handleTimeout();
         void cancelTimer();
+        void resetTimer();
 
 
         const uint64_t getSessionId()
@@ -86,6 +87,7 @@ namespace nd
         unsigned timerIdM;
         FiniteStateMachine* fsmM;
 
+        long prevTimerIntervalM;
         min_heap_item_t* fsmTimerM;
         uint64_t sessionIdM;
 

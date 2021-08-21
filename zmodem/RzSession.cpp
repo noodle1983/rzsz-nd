@@ -50,7 +50,7 @@ nd::FiniteStateMachine* RzSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
         (*fsm) += FSM_STATE(WAIT_ZDATA_STATE);
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
+        //(*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000)); // it takes times for the client to verify the CRC
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(ZmodemSession, parseFrame));

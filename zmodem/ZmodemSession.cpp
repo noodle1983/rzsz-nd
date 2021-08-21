@@ -149,6 +149,14 @@ void ZmodemSession::parseHexFrame()
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "got Hex frame:" << getTypeStr(inputFrameM.type));
+
+    if (inputFrameM.type == ZHEARTBEAT){
+        resetTimer();
+        if (bufferLenM > 0){
+            asynHandleEvent(NETWORK_INPUT_EVT);
+        }
+        return;
+    }
 	handleEvent(HANDLE_FRAME_EVT);
 	return;
 }
@@ -177,6 +185,14 @@ void ZmodemSession::parseBinFrame()
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "got Bin frame:" << getTypeStr(inputFrameM.type));
+
+    if (inputFrameM.type == ZHEARTBEAT){
+        resetTimer();
+        if (bufferLenM > 0){
+            asynHandleEvent(NETWORK_INPUT_EVT);
+        }
+        return;
+    }
 	handleEvent(HANDLE_FRAME_EVT);
 	return;
 }
@@ -205,6 +221,14 @@ void ZmodemSession::parseBin32Frame()
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "got Bin32 frame:" << getTypeStr(inputFrameM.type));
+
+    if (inputFrameM.type == ZHEARTBEAT){
+        resetTimer();
+        if (bufferLenM > 0){
+            asynHandleEvent(NETWORK_INPUT_EVT);
+        }
+        return;
+    }
 	handleEvent(HANDLE_FRAME_EVT);
 	return;
 }
@@ -233,6 +257,14 @@ void ZmodemSession::parseBin64Frame()
     LOG_INFO(getSessionName() 
         << "[" << getSessionId() << "] " << getCurState().getName() << " "
         << "got Bin64 frame:" << getTypeStr(inputFrameM.type));
+
+    if (inputFrameM.type == ZHEARTBEAT){
+        resetTimer();
+        if (bufferLenM > 0){
+            asynHandleEvent(NETWORK_INPUT_EVT);
+        }
+        return;
+    }
 	handleEvent(HANDLE_FRAME_EVT);
 	return;
 }
