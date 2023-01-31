@@ -734,9 +734,12 @@ void ZmodemSession::handleZdata()
                     eatBuffer();
 					dataCrcM = 0xFFFFFFFFL;
                     asynHandleEvent(NETWORK_INPUT_EVT);
+                    LOG_SE_INFO("ZCRCG len:" << zmodemFileM->getPos() << "/" << zmodemFileM->getSize()
+                            << ", crc:" << calc_crc);
                     return;
 				}else {
-                    LOG_SE_ERROR("ZCRCG crc error! at len:" << (lastCheckExcapedSavedM - decodeIndexM));
+                    LOG_SE_ERROR("ZCRCG crc error! at len:" << (lastCheckExcapedSavedM - decodeIndexM)
+                            << ", recv:" << recv_crc << ", calc:" << calc_crc);
 					handleEvent(RESET_EVT);
 					return;
 				}
