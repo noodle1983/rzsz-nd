@@ -35,6 +35,7 @@ public:
                 false, "", "directory path") 
         , serverWorkingDirM("s","server-working-dir", "Depending on ZVERSION:1, set the working directory on the server side. It is current directory if not set.",
                 false, "./", "directory path") 
+        , logDataM("t","test-data", "Log Test Data", false) 
         , rzDirModeM(false)
         , presetRzFilesM("p","preset-files", "Depending on ZVERSION:1, preset rz files splited by '#' to skip file selection",
                 false, "", "directory/file path") 
@@ -48,12 +49,14 @@ public:
     const std::string& getLogfile(){return logFileArgM.getValue();}
     const std::string& getClientWorkingDir(){return clientWorkingDirM.getValue();}
     const std::string& getServerWorkingDir(){return serverWorkingDirM.getValue();}
+    bool shouldLogTestData(){return logDataM.getValue();}
     const std::string& getPresetRzFiles(){return presetRzFilesM.getValue();}
     void addCommonOptions(TCLAP::CmdLine& cmd){
         cmd.add(debugArgM);
         cmd.add(logFileArgM);
         cmd.add(clientWorkingDirM);
         cmd.add(serverWorkingDirM);
+        cmd.add(logDataM);
     }
 
     void addFiles(TCLAP::UnlabeledMultiArg<std::string>& optionsFiles);
@@ -64,6 +67,7 @@ public:
     TCLAP::ValueArg<std::string> logFileArgM;
     TCLAP::ValueArg<std::string> clientWorkingDirM;
     TCLAP::ValueArg<std::string> serverWorkingDirM;
+    TCLAP::SwitchArg logDataM;
 
     // sz files
     std::vector<ZmodemFile*> filesM;

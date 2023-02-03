@@ -21,6 +21,8 @@ ZmodemSession::ZmodemSession(nd::FiniteStateMachine* fsm)
     , zmodemFileM(NULL)
     , inputTimerM(NULL)
     , peerVersionM(0)
+    , plainDataFileM("plainZdata.data", 16)
+    , encodedDataFileM("encodedZdata.data")
 {
 	memset(&inputFrameM, 0, sizeof(inputFrameM));
 	sendFinOnResetM = false;
@@ -701,6 +703,12 @@ void ZmodemSession::handleZdata()
 
 				if (calc_crc == recv_crc){
 					lastCheckExcapedM += 1 + consume_len;
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
 					if (!zmodemFileM->write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM)){
 						handleEvent(RESET_EVT);
 						return;
@@ -711,6 +719,18 @@ void ZmodemSession::handleZdata()
 					
                     eatBuffer();
 					handleEvent(NEXT_EVT);
+					return;
+				} else {
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
+                    LOG_SE_ERROR("ZCRCE crc error! at len:" << (lastCheckExcapedSavedM - decodeIndexM)
+                        << ", recv:" << recv_crc << ", calc:" << calc_crc 
+                        << ", valided pos:" << zmodemFileM->getPos());
+					handleEvent(RESET_EVT);
 					return;
 				}
 			}else if (ZCRCG == bufferM[lastCheckExcapedM + 1]){	
@@ -725,6 +745,12 @@ void ZmodemSession::handleZdata()
 				if (calc_crc == recv_crc){
 					assert(lastCheckExcapedSavedM - decodeIndexM == 1024);
 					lastCheckExcapedM += 1 + consume_len;
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
 					if (!zmodemFileM->write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM)){
 						handleEvent(RESET_EVT);
 						return;
@@ -737,9 +763,16 @@ void ZmodemSession::handleZdata()
                     LOG_SE_INFO("ZCRCG len:" << zmodemFileM->getPos() << "/" << zmodemFileM->getSize()
                             << ", crc:" << calc_crc);
                     return;
-				}else {
+				} else {
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
                     LOG_SE_ERROR("ZCRCG crc error! at len:" << (lastCheckExcapedSavedM - decodeIndexM)
-                            << ", recv:" << recv_crc << ", calc:" << calc_crc);
+                        << ", recv:" << recv_crc << ", calc:" << calc_crc 
+                        << ", valided pos:" << zmodemFileM->getPos());
 					handleEvent(RESET_EVT);
 					return;
 				}
@@ -756,6 +789,12 @@ void ZmodemSession::handleZdata()
 
 				if (calc_crc == recv_crc){
 					lastCheckExcapedM += 1 + consume_len;
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
 					if (!zmodemFileM->write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM)){
 						handleEvent(RESET_EVT);
 						return;
@@ -766,6 +805,18 @@ void ZmodemSession::handleZdata()
                     eatBuffer();
 					checkSendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
+				} else {
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
+                    LOG_SE_ERROR("ZCRCQ crc error! at len:" << (lastCheckExcapedSavedM - decodeIndexM)
+                        << ", recv:" << recv_crc << ", calc:" << calc_crc 
+                        << ", valided pos:" << zmodemFileM->getPos());
+					handleEvent(RESET_EVT);
+					return;
 				}
 
 			}else if (ZCRCW == bufferM[lastCheckExcapedM + 1]){
@@ -779,6 +830,12 @@ void ZmodemSession::handleZdata()
 
 				if (calc_crc == recv_crc){
 					lastCheckExcapedM += 1 + consume_len;
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
 					if (!zmodemFileM->write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM)){
 						handleEvent(RESET_EVT);
 						return;
@@ -789,13 +846,35 @@ void ZmodemSession::handleZdata()
                     eatBuffer();
 					checkSendFrameHeader(ZACK, zmodemFileM->getPos());
 					continue;
+				} else {
+                    if (g_options->shouldLogTestData()){
+                        plainDataFileM.write(curBuffer(), lastCheckExcapedSavedM - decodeIndexM);
+                        plainDataFileM.close();
+                        encodedDataFileM.write(bufferM + lastCheckExcapedM, consume_len + 2);
+                        encodedDataFileM.close();
+                    }
+                    LOG_SE_ERROR("ZCRCW crc error! at len:" << (lastCheckExcapedSavedM - decodeIndexM)
+                        << ", recv:" << recv_crc << ", calc:" << calc_crc 
+                        << ", valided pos:" << zmodemFileM->getPos());
+					handleEvent(RESET_EVT);
+					return;
 				}
 			}else{
+                if (g_options->shouldLogTestData()){
+                    encodedDataFileM.write(bufferM + lastCheckExcapedM, 2);
+                    uint64_t offset = lastCheckExcapedSavedM - decodeIndexM + 1;
+                    if (offset > 0 && (offset % 16 == 0)){ encodedDataFileM.switchLine(); }
+                }
 				lastCheckExcapedM++;
 				bufferM[lastCheckExcapedSavedM] = bufferM[lastCheckExcapedM] ^ 0x40;
 				dataCrcM = UPDC32((unsigned char)(bufferM[lastCheckExcapedSavedM]), dataCrcM);
 			}
 		}else{
+            if (g_options->shouldLogTestData()){
+                encodedDataFileM.write(bufferM + lastCheckExcapedM, 1);
+                uint64_t offset = lastCheckExcapedSavedM - decodeIndexM + 1;
+                if (offset > 0 && (offset % 16 == 0)){ encodedDataFileM.switchLine(); }
+            }
 			bufferM[lastCheckExcapedSavedM] = bufferM[lastCheckExcapedM];
 			dataCrcM = UPDC32((unsigned char)(bufferM[lastCheckExcapedSavedM]), dataCrcM);
 		}

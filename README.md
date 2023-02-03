@@ -153,8 +153,8 @@ client->>server: FIN
 server->>client: FIN
 ```
 
-# 4. update working direction
-The options are added to update client/server working direction, and preset the rz files to avoid the file selection. Please refer to the usage chapter for the details.
+# 4. update working directory
+The options are added to update client/server working directory, and preset the rz files to avoid the file selection. Please refer to the usage chapter for the details.
 
 # 5. How to build
 

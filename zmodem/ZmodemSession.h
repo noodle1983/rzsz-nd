@@ -14,6 +14,7 @@
 #include "Session.h"
 #include "zmodem.h"
 #include "ZmodemFile.h"
+#include "DebugFile.h"
 #include <iostream>
 #include <sstream>
 #include <memory>
@@ -158,6 +159,9 @@ protected:
 
     uint8_t peerVersionM;
     std::stringstream reportM;
+
+    DebugFile plainDataFileM;
+    DebugFile encodedDataFileM;
 };
 
 #endif /* ZMODEM_SESSION_H */
