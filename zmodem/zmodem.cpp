@@ -139,6 +139,8 @@ const char* getTypeStr(unsigned char type)
     case ZFREECNT: return "ZFREECNT";
     case ZCOMMAND: return "ZCOMMAND";
     case ZSTDERR: return "ZSTDERR";
+    case ZHEARTBEAT: return "ZHEARTBEAT";
+    case ZMSG: return "ZMSG";
     default: return "UNKNOWN";
     }
 

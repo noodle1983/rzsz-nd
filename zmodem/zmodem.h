@@ -43,6 +43,8 @@
 #define ZFREECNT   17
 #define ZCOMMAND   18
 #define ZSTDERR    19
+#define ZHEARTBEAT 20
+#define ZMSG       21
 
 /* ZDLE sequences */
 #define ZCRCE 'h'	/* CRC next, frame ends, header packet follows */
