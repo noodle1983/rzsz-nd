@@ -171,7 +171,7 @@ $(OUTDIR)/%$(DEBUG_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	@echo ""
 
 $(OUTDIR)/%$(DEBUG_SUFFIX).o:%.c $(DEPENDMAKEFILES)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(cc) $(CFLAGS) -c $< -o $@
 	@echo ""
 
 -include $(RELEASE_DEPENDFILES)
@@ -187,7 +187,7 @@ $(OUTDIR)/%$(RELEASE_SUFFIX).o:%.cpp $(DEPENDMAKEFILES)
 	@echo ""
 
 $(OUTDIR)/%$(RELEASE_SUFFIX).o:%.c $(DEPENDMAKEFILES)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(cc) $(CFLAGS) -c $< -o $@
 	@echo ""
 
 debug_depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(DEBUG_DEPENDTARGET)

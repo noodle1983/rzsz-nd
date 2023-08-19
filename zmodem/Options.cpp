@@ -16,10 +16,17 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <cstdlib>
 
 using namespace nd;
 using namespace std;
 namespace fs = filesystem;
+
+void Options::checkEnv()
+{
+    const char* envTmux = std::getenv("TMUX");
+    isInTmuxM = (envTmux != nullptr && strlen(envTmux) > 0);
+}
 
 
 void checkAddFile(const string& abPath, const string& rePath, vector<ZmodemFile*>& files)

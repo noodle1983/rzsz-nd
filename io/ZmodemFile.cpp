@@ -15,6 +15,8 @@
 #include <dirent.h>
 #include <errno.h>
 
+uint32_t ZmodemFile::nextFileIdM = 0; 
+
 void createDir(const std::string& thePath)
 {
     if (thePath.empty())
@@ -56,10 +58,11 @@ ZmodemFile::ZmodemFile(
 	const std::string& dir, 
 	const std::string& filename, 
 	const std::string& fileinfo)
-	: fileNameM(filename),
-	fileSizeM(0),
-	fileTimeM(0),
-	posM(0)
+        : fileNameM(filename)
+        , fileSizeM(0)
+        , fileTimeM(0)
+        , posM(0)
+        , fileIdM(-1)
 {
 	parseInfo(fileinfo);
 
@@ -135,13 +138,10 @@ bool ZmodemFile::parseInfo(const std::string& fileinfo)
 	return 1;
 }
 
-uint64_t ZmodemFile::validateFileCrc(const char* fileLenAndCrc)
+uint64_t ZmodemFile::validateFileCrc(uint64_t existLen, uint32_t existCrc)
 {
-    uint64_t existLen = 0;
-    uint32_t existCrc = 0;
-	sscanf(fileLenAndCrc, "%llu %u", (unsigned long long*)&existLen, &existCrc);
-
     if (existLen > fileSizeM){return 0;}
+    if (existLen == 0){return 0;}
 
     uint32_t crc = 0xFFFFFFFFL;
 	std::ifstream stream(fullPathM, std::fstream::in | std::fstream::binary);
@@ -169,6 +169,7 @@ ZmodemFile::ZmodemFile(const std::string& filepath, const std::string& rePath, u
 	, fileSizeM(filesize)
 	, fileTimeM(filetime)
 	, posM(0)
+    , fileIdM(++nextFileIdM)
 {
 }
 

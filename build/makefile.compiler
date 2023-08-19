@@ -12,10 +12,10 @@ AR=ar
 RANLIB=ranlib 
 ARFLAGS=rcs
 SHAREDFLAG= -fPIC -shared
-DEBUG_CFLAGS= -g -fsanitize=address -fno-omit-frame-pointer -DDEBUG
+DEBUG_CFLAGS= -g -O0 -fsanitize=address -fno-omit-frame-pointer -DDEBUG
 RELEASE_CFLAGS= -g -O3
-CFLAGS= -Wall -D_FILE_OFFSET_BITS=64 $(INC_DIR)
-CXXFLAGS= -std=c++17 $(CFLAGS)
+CFLAGS+= -Wall -D_FILE_OFFSET_BITS=64 $(INC_DIR)
+CXXFLAGS+= -std=c++17 $(CFLAGS)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)

@@ -15,9 +15,9 @@ class ZmodemFile
 {
 public:
 	ZmodemFile(
-	const std::string& dir, 
-	const std::string& filename, 
-	const std::string& fileinfo);
+        const std::string& dir, 
+        const std::string& filename, 
+        const std::string& fileinfo);
 
 	~ZmodemFile();
 
@@ -28,6 +28,8 @@ public:
 	unsigned long long getSize(){return fileSizeM;}
 	unsigned long long getFileSize(){return fileSizeM;}
 	unsigned long long getFileTime(){return fileTimeM;}
+    uint32_t getFileId(){return fileIdM;}
+    void setFileId(uint32_t fileId){fileIdM = fileId;}
 	bool isCompleted(){return posM == fileSizeM;}
 	const std::string& getFilename(){return fileNameM;}
 
@@ -38,7 +40,7 @@ public:
 	unsigned read(char*buf, unsigned size);
 	void setReadPos(unsigned long long pos);
 	void setWritePos(unsigned long long pos);
-    uint64_t validateFileCrc(const char* fileLenAndCrc);
+    uint64_t validateFileCrc(uint64_t existLen, uint32_t existCrc);
 
 	bool isGood(){return fileM.good() && fileM.is_open();}
 
@@ -52,6 +54,8 @@ private:
 	unsigned long long fileTimeM;
 	unsigned long long posM;
 
+    uint32_t fileIdM; 
+    static uint32_t nextFileIdM; 
 };
 
 #endif /* ZMODEM_FILE_H */

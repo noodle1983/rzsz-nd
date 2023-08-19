@@ -1,0 +1,84 @@
+namespace nd;
+
+enum PkgType: byte {
+    Invalid = 0,
+
+    InitReq = 1,
+    InitRsp,
+
+    FileInfo,
+    FileProposeStart,
+    FileInitPos,
+    FileContent,
+    FileComplete,
+    FileCompleteAck,
+
+    Bye,
+    ByeBye,
+} 
+
+table InitReq {
+    version : uint32;
+}
+
+table InitRsp {
+    version : uint32;
+}
+
+table FileInfo {
+    id : uint32;
+    relative_path : string;
+    filesize : uint64;
+}
+
+table FileProposeStart {
+    id : uint32;
+    exist_pos : uint64;
+    exist_crc32 : uint32;
+}
+
+table FileInitPos {
+    id : uint32;
+    offset : uint64;
+}
+
+table FileContent {
+    id : uint32;
+    offset : uint64;
+    crc32 : uint32;
+    content : string;
+}
+
+table FileComplete {
+    id : uint32;
+    filesize : uint64;
+}
+
+//comment
+table FileCompleteAck {
+    id : uint32;
+}
+
+
+table Bye { }
+table ByeBye { }
+
+table OscPkg{
+    pkg_type : PkgType;
+
+    init_req : InitReq;
+    init_rsp : InitRsp;
+
+    file_info : FileInfo;
+    file_propose_start : FileProposeStart;
+    file_init_pos : FileInitPos;
+    file_content : FileContent;
+    file_complete : FileComplete;
+    file_complete_ack : FileCompleteAck;
+
+    bye : Bye;
+    byebye : ByeBye;
+}
+
+
+root_type OscPkg; 

@@ -38,16 +38,16 @@ namespace nd
         }
 
         int getInput(char* buf, unsigned len){
-            fd_set fds;
-            struct timeval timeout;
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 0;//10*1000;
-            FD_SET(STDIN_FILENO, &fds);
-            if(select(STDIN_FILENO + 1, &fds, NULL, NULL, &timeout)<0){
-                LOG_ERROR("select failed! errno:" << errno);
-                return 0;
-            }
-            if (!FD_ISSET(STDIN_FILENO, &fds)){return 0;}
+            //fd_set fds;
+            //struct timeval timeout;
+            //timeout.tv_sec = 0;
+            //timeout.tv_usec = 0;//10*1000;
+            //FD_SET(STDIN_FILENO, &fds);
+            //if(select(STDIN_FILENO + 1, &fds, NULL, NULL, &timeout)<0){
+            //    LOG_ERROR("select failed! errno:" << errno);
+            //    return 0;
+            //}
+            //if (!FD_ISSET(STDIN_FILENO, &fds)){return 0;}
 
             int readed = ::read(STDIN_FILENO, buf, len);
             return readed;

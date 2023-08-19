@@ -1047,7 +1047,12 @@ void ZmodemSession::handleZfileRsp()
     if (inputFrameM.type == ZCOMMAND && inputFrameM.flag[ZF0] == ZCMD_CHK_LAST_BREAK){
         int strCnt = parseZdataString();
         if (strCnt < 1) {return;}
-        uint64_t validLen = zmodemFileM->validateFileCrc(bufferM + decodeIndexM);
+
+        uint64_t existLen = 0;
+        uint32_t existCrc = 0;
+        sscanf(bufferM + decodeIndexM, "%llu %u", (unsigned long long*)&existLen, &existCrc);
+
+        uint64_t validLen = zmodemFileM->validateFileCrc(existLen, existCrc);
         parseZdataStringDone();
 
         checkSendFrameHeader(ZACK, validLen);

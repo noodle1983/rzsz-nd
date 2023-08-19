@@ -26,6 +26,9 @@ public:
         outM.open(g_options->getLogfile());
     }
 
+    void setExePrefix(const std::string& exePrefix){exePrefixM = exePrefix;}
+    const std::string& getExePrefix(){return exePrefixM;}
+
     std::ofstream& stream(const char* levelStr, const char* file, const unsigned lineno){
         time_t rawTime;
         struct tm info;
@@ -48,6 +51,7 @@ public:
 private:
     std::ofstream outM;
     std::mutex mutexM;
+    std::string exePrefixM;
 };
 
 const char* const g_loglevel_str[] = {
@@ -64,7 +68,7 @@ const char* const g_loglevel_str[] = {
     if (level >= g_options->getDebugLevel()) {\
         std::lock_guard<std::mutex> lock(g_file_logger->mutex()); \
         g_file_logger->stream(g_loglevel_str[level], __FILE__, __LINE__) << msg << std::endl; \
-        if(toErr){std::cerr << msg << std::endl;} \
+        if(toErr){std::cerr << g_file_logger->getExePrefix() << " " << msg << "\r\n";} \
     }\
 }
 

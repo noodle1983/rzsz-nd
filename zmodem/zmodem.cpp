@@ -181,7 +181,7 @@ void setTtyRawMode(){
     tty.c_cflag |= CS8;
     tty.c_cc[VMIN] = 1; /* This many chars satisfies reads */
     tty.c_cc[VTIME] = 1;    /* or in this many tenths of seconds */
-    tcsetattr(STDIN_FILENO,TCSADRAIN,&tty);
+    tcsetattr(STDIN_FILENO, TCSADRAIN, &tty);
 }
 
 void resetTty(){

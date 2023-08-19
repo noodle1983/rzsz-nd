@@ -28,7 +28,6 @@ Session::Session(
     , fsmTimerM(NULL)
     , sessionIdM(theSessionId)
 {
-
 }
 
 //-----------------------------------------------------------------------------
@@ -61,6 +60,7 @@ void Session::init(
     timerIdM = 0;
     prevTimerIntervalM = 0;
     g_processor->cancelLocalTimer(fsmTimerM);
+
 }
 
 //-----------------------------------------------------------------------------
