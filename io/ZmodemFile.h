@@ -18,6 +18,10 @@ public:
         const std::string& dir, 
         const std::string& filename, 
         const std::string& fileinfo);
+	ZmodemFile(
+        const std::string& dir, 
+        const char* filename, 
+        const uint64_t filesize);
 
 	~ZmodemFile();
 

@@ -39,6 +39,18 @@ struct FileCompleteBuilder;
 struct FileCompleteAck;
 struct FileCompleteAckBuilder;
 
+struct InitRecv;
+struct InitRecvBuilder;
+
+struct SetClientWorkingDir;
+struct SetClientWorkingDirBuilder;
+
+struct CreateDir;
+struct CreateDirBuilder;
+
+struct Heartbeat;
+struct HeartbeatBuilder;
+
 struct Bye;
 struct ByeBuilder;
 
@@ -58,13 +70,17 @@ enum PkgType : int8_t {
   PkgType_FileContent = 6,
   PkgType_FileComplete = 7,
   PkgType_FileCompleteAck = 8,
-  PkgType_Bye = 9,
-  PkgType_ByeBye = 10,
+  PkgType_InitRecv = 9,
+  PkgType_SetClientWorkingDir = 10,
+  PkgType_CreateDir = 11,
+  PkgType_Heartbeat = 12,
+  PkgType_Bye = 13,
+  PkgType_ByeBye = 14,
   PkgType_MIN = PkgType_Invalid,
   PkgType_MAX = PkgType_ByeBye
 };
 
-inline const PkgType (&EnumValuesPkgType())[11] {
+inline const PkgType (&EnumValuesPkgType())[15] {
   static const PkgType values[] = {
     PkgType_Invalid,
     PkgType_InitReq,
@@ -75,6 +91,10 @@ inline const PkgType (&EnumValuesPkgType())[11] {
     PkgType_FileContent,
     PkgType_FileComplete,
     PkgType_FileCompleteAck,
+    PkgType_InitRecv,
+    PkgType_SetClientWorkingDir,
+    PkgType_CreateDir,
+    PkgType_Heartbeat,
     PkgType_Bye,
     PkgType_ByeBye
   };
@@ -82,7 +102,7 @@ inline const PkgType (&EnumValuesPkgType())[11] {
 }
 
 inline const char * const *EnumNamesPkgType() {
-  static const char * const names[12] = {
+  static const char * const names[16] = {
     "Invalid",
     "InitReq",
     "InitRsp",
@@ -92,6 +112,10 @@ inline const char * const *EnumNamesPkgType() {
     "FileContent",
     "FileComplete",
     "FileCompleteAck",
+    "InitRecv",
+    "SetClientWorkingDir",
+    "CreateDir",
+    "Heartbeat",
     "Bye",
     "ByeBye",
     nullptr
@@ -553,6 +577,166 @@ inline ::flatbuffers::Offset<FileCompleteAck> CreateFileCompleteAck(
   return builder_.Finish();
 }
 
+struct InitRecv FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef InitRecvBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct InitRecvBuilder {
+  typedef InitRecv Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit InitRecvBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<InitRecv> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<InitRecv>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<InitRecv> CreateInitRecv(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  InitRecvBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
+struct SetClientWorkingDir FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef SetClientWorkingDirBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_WORKING_DIR = 4
+  };
+  const ::flatbuffers::String *working_dir() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_WORKING_DIR);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_WORKING_DIR) &&
+           verifier.VerifyString(working_dir()) &&
+           verifier.EndTable();
+  }
+};
+
+struct SetClientWorkingDirBuilder {
+  typedef SetClientWorkingDir Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_working_dir(::flatbuffers::Offset<::flatbuffers::String> working_dir) {
+    fbb_.AddOffset(SetClientWorkingDir::VT_WORKING_DIR, working_dir);
+  }
+  explicit SetClientWorkingDirBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<SetClientWorkingDir> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<SetClientWorkingDir>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<SetClientWorkingDir> CreateSetClientWorkingDir(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> working_dir = 0) {
+  SetClientWorkingDirBuilder builder_(_fbb);
+  builder_.add_working_dir(working_dir);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<SetClientWorkingDir> CreateSetClientWorkingDirDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *working_dir = nullptr) {
+  auto working_dir__ = working_dir ? _fbb.CreateString(working_dir) : 0;
+  return nd::CreateSetClientWorkingDir(
+      _fbb,
+      working_dir__);
+}
+
+struct CreateDir FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef CreateDirBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NEW_DIR = 4
+  };
+  const ::flatbuffers::String *new_dir() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NEW_DIR);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NEW_DIR) &&
+           verifier.VerifyString(new_dir()) &&
+           verifier.EndTable();
+  }
+};
+
+struct CreateDirBuilder {
+  typedef CreateDir Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_new_dir(::flatbuffers::Offset<::flatbuffers::String> new_dir) {
+    fbb_.AddOffset(CreateDir::VT_NEW_DIR, new_dir);
+  }
+  explicit CreateDirBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<CreateDir> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<CreateDir>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<CreateDir> CreateCreateDir(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> new_dir = 0) {
+  CreateDirBuilder builder_(_fbb);
+  builder_.add_new_dir(new_dir);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<CreateDir> CreateCreateDirDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *new_dir = nullptr) {
+  auto new_dir__ = new_dir ? _fbb.CreateString(new_dir) : 0;
+  return nd::CreateCreateDir(
+      _fbb,
+      new_dir__);
+}
+
+struct Heartbeat FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef HeartbeatBuilder Builder;
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           verifier.EndTable();
+  }
+};
+
+struct HeartbeatBuilder {
+  typedef Heartbeat Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  explicit HeartbeatBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<Heartbeat> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<Heartbeat>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<Heartbeat> CreateHeartbeat(
+    ::flatbuffers::FlatBufferBuilder &_fbb) {
+  HeartbeatBuilder builder_(_fbb);
+  return builder_.Finish();
+}
+
 struct Bye FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ByeBuilder Builder;
   bool Verify(::flatbuffers::Verifier &verifier) const {
@@ -623,8 +807,12 @@ struct OscPkg FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_FILE_CONTENT = 16,
     VT_FILE_COMPLETE = 18,
     VT_FILE_COMPLETE_ACK = 20,
-    VT_BYE = 22,
-    VT_BYEBYE = 24
+    VT_INIT_RECV = 22,
+    VT_SET_CLIENT_WORKING_DIR = 24,
+    VT_CREATE_DIR = 26,
+    VT_HEARTBEAT = 28,
+    VT_BYE = 30,
+    VT_BYEBYE = 32
   };
   nd::PkgType pkg_type() const {
     return static_cast<nd::PkgType>(GetField<int8_t>(VT_PKG_TYPE, 0));
@@ -653,6 +841,18 @@ struct OscPkg FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const nd::FileCompleteAck *file_complete_ack() const {
     return GetPointer<const nd::FileCompleteAck *>(VT_FILE_COMPLETE_ACK);
   }
+  const nd::InitRecv *init_recv() const {
+    return GetPointer<const nd::InitRecv *>(VT_INIT_RECV);
+  }
+  const nd::SetClientWorkingDir *set_client_working_dir() const {
+    return GetPointer<const nd::SetClientWorkingDir *>(VT_SET_CLIENT_WORKING_DIR);
+  }
+  const nd::CreateDir *create_dir() const {
+    return GetPointer<const nd::CreateDir *>(VT_CREATE_DIR);
+  }
+  const nd::Heartbeat *heartbeat() const {
+    return GetPointer<const nd::Heartbeat *>(VT_HEARTBEAT);
+  }
   const nd::Bye *bye() const {
     return GetPointer<const nd::Bye *>(VT_BYE);
   }
@@ -678,6 +878,14 @@ struct OscPkg FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyTable(file_complete()) &&
            VerifyOffset(verifier, VT_FILE_COMPLETE_ACK) &&
            verifier.VerifyTable(file_complete_ack()) &&
+           VerifyOffset(verifier, VT_INIT_RECV) &&
+           verifier.VerifyTable(init_recv()) &&
+           VerifyOffset(verifier, VT_SET_CLIENT_WORKING_DIR) &&
+           verifier.VerifyTable(set_client_working_dir()) &&
+           VerifyOffset(verifier, VT_CREATE_DIR) &&
+           verifier.VerifyTable(create_dir()) &&
+           VerifyOffset(verifier, VT_HEARTBEAT) &&
+           verifier.VerifyTable(heartbeat()) &&
            VerifyOffset(verifier, VT_BYE) &&
            verifier.VerifyTable(bye()) &&
            VerifyOffset(verifier, VT_BYEBYE) &&
@@ -717,6 +925,18 @@ struct OscPkgBuilder {
   void add_file_complete_ack(::flatbuffers::Offset<nd::FileCompleteAck> file_complete_ack) {
     fbb_.AddOffset(OscPkg::VT_FILE_COMPLETE_ACK, file_complete_ack);
   }
+  void add_init_recv(::flatbuffers::Offset<nd::InitRecv> init_recv) {
+    fbb_.AddOffset(OscPkg::VT_INIT_RECV, init_recv);
+  }
+  void add_set_client_working_dir(::flatbuffers::Offset<nd::SetClientWorkingDir> set_client_working_dir) {
+    fbb_.AddOffset(OscPkg::VT_SET_CLIENT_WORKING_DIR, set_client_working_dir);
+  }
+  void add_create_dir(::flatbuffers::Offset<nd::CreateDir> create_dir) {
+    fbb_.AddOffset(OscPkg::VT_CREATE_DIR, create_dir);
+  }
+  void add_heartbeat(::flatbuffers::Offset<nd::Heartbeat> heartbeat) {
+    fbb_.AddOffset(OscPkg::VT_HEARTBEAT, heartbeat);
+  }
   void add_bye(::flatbuffers::Offset<nd::Bye> bye) {
     fbb_.AddOffset(OscPkg::VT_BYE, bye);
   }
@@ -745,11 +965,19 @@ inline ::flatbuffers::Offset<OscPkg> CreateOscPkg(
     ::flatbuffers::Offset<nd::FileContent> file_content = 0,
     ::flatbuffers::Offset<nd::FileComplete> file_complete = 0,
     ::flatbuffers::Offset<nd::FileCompleteAck> file_complete_ack = 0,
+    ::flatbuffers::Offset<nd::InitRecv> init_recv = 0,
+    ::flatbuffers::Offset<nd::SetClientWorkingDir> set_client_working_dir = 0,
+    ::flatbuffers::Offset<nd::CreateDir> create_dir = 0,
+    ::flatbuffers::Offset<nd::Heartbeat> heartbeat = 0,
     ::flatbuffers::Offset<nd::Bye> bye = 0,
     ::flatbuffers::Offset<nd::ByeBye> byebye = 0) {
   OscPkgBuilder builder_(_fbb);
   builder_.add_byebye(byebye);
   builder_.add_bye(bye);
+  builder_.add_heartbeat(heartbeat);
+  builder_.add_create_dir(create_dir);
+  builder_.add_set_client_working_dir(set_client_working_dir);
+  builder_.add_init_recv(init_recv);
   builder_.add_file_complete_ack(file_complete_ack);
   builder_.add_file_complete(file_complete);
   builder_.add_file_content(file_content);

@@ -100,14 +100,14 @@ void OscSession::parsePkg()
         int base64_len = suffix_pos - prefix_pos - OSC_PREFIX_LEN;
         if (base64_len > OSC_MAX_ENCODED_PKG_SIZE){
             LOG_SE_ERROR("Error: package len:" << base64_len << " reach max size:" << OSC_MAX_ENCODED_PKG_SIZE << "!");
-            asynHandleEvent(DESTROY_EVT);
+            asynHandleEvent(RESET_EVT);
             return;
         }
         uint8_t xz_buf[OSC_MAX_ENCODED_PKG_SIZE] = {0};
         int xz_len = base64_decode(prefix_pos + OSC_PREFIX_LEN, base64_len, xz_buf);
         if (xz_len <= 0){
             LOG_SE_ERROR("Error: base64 decode error:[" << std::string(prefix_pos + OSC_PREFIX_LEN, base64_len) << "]!");
-            asynHandleEvent(DESTROY_EVT);
+            asynHandleEvent(RESET_EVT);
             return;
         }
 
@@ -115,7 +115,7 @@ void OscSession::parsePkg()
         int decode_len = decodeLz(xz_buf, xz_len, (uint8_t*)decode_buf, sizeof(decode_buf));
         if (decode_len <= 0){
             LOG_SE_ERROR("Error: xz decode error!");
-            asynHandleEvent(DESTROY_EVT);
+            asynHandleEvent(RESET_EVT);
             return;
         }
 
@@ -129,6 +129,7 @@ void OscSession::parsePkg()
             LOG_SE_INFO("[handleInitRsp]version:" << (int)peerVersionM);
         }
         else if (pkg->pkg_type() == nd::PkgType_FileInfo){
+            handleFileInfo(pkg);
         }
         else if (pkg->pkg_type() == nd::PkgType_FileProposeStart){
             handleFileProposeStart(pkg);
@@ -136,16 +137,33 @@ void OscSession::parsePkg()
         else if (pkg->pkg_type() == nd::PkgType_FileCompleteAck){
             handleFileCompleteAck(pkg);
         }
+        else if (pkg->pkg_type() == nd::PkgType_FileInitPos){
+            handleFileInitPos(pkg);
+        }
+        else if (pkg->pkg_type() == nd::PkgType_FileContent){
+            handleFileContent(pkg);
+        }
+        else if (pkg->pkg_type() == nd::PkgType_FileComplete){
+            handleFileComplete(pkg);
+        }
+        else if (pkg->pkg_type() == nd::PkgType_Heartbeat){
+            resetTimer();
+            if (bufferLenM > 0){
+                asynHandleEvent(NETWORK_INPUT_EVT);
+            }
+        }
         else if (pkg->pkg_type() == nd::PkgType_Bye){
             LOG_SE_INFO("[handleBye]");
             sendByeBye();
+            asynHandleEvent(DESTROY_EVT);
         }
         else if (pkg->pkg_type() == nd::PkgType_ByeBye){
+            asynHandleEvent(RESET_EVT);
             LOG_SE_INFO("[handleByeBye]");
-            asynHandleEvent(DESTROY_EVT);
         }
-        else if (pkg->pkg_type() == nd::PkgType_Invalid){
-            asynHandleEvent(DESTROY_EVT);
+        else {
+            LOG_SE_ERROR("[parsePkg]unkonwn pkg:" << EnumNamePkgType(pkg->pkg_type()));
+            asynHandleEvent(RESET_EVT);
         }
     }
 
@@ -256,14 +274,14 @@ void OscSession::sendPkg(const uint8_t* fb_buf, int fb_len)
     uint8_t xz_buf[OSC_MAX_ENCODED_PKG_SIZE] = {0};
     int xz_len = encodeLz(fb_buf, fb_len, xz_buf, sizeof(xz_buf));
     if (xz_len == 0){
-        asynHandleEvent(DESTROY_EVT);
+        asynHandleEvent(RESET_EVT);
         return;
     }
 
     char base64_buf[OSC_MAX_ENCODED_PKG_SIZE] = {0};
     if ((size_t)BASE64_CHARS(xz_len) >= sizeof(base64_buf)){
         LOG_SE_ERROR("[sendPkg]xz buff is too large! xz_len:" << xz_len)
-        asynHandleEvent(DESTROY_EVT);
+        asynHandleEvent(RESET_EVT);
         return;
     }
 
@@ -346,7 +364,7 @@ void OscSession::sendFileInfo()
 void OscSession::handleFileProposeStart(const nd::OscPkg *pkg)
 {
     if (pkg->pkg_type() != nd::PkgType_FileProposeStart){
-        asynHandleEvent(DESTROY_EVT);
+        asynHandleEvent(RESET_EVT);
         return;
     }
 
@@ -357,7 +375,7 @@ void OscSession::handleFileProposeStart(const nd::OscPkg *pkg)
 
     auto it = zmodemFileMapM.find(file_propose_start->id());
     if (it == zmodemFileMapM.end()){
-        asynHandleEvent(DESTROY_EVT);
+        asynHandleEvent(RESET_EVT);
         return;
     }
 
@@ -491,7 +509,7 @@ void OscSession::sendFileComplete(ZmodemFile* zmodemFile)
 void OscSession::handleFileCompleteAck(const nd::OscPkg *pkg)
 {
     if (pkg->pkg_type() != nd::PkgType_FileCompleteAck){
-        asynHandleEvent(DESTROY_EVT);
+        asynHandleEvent(RESET_EVT);
         return;
     }
 
@@ -500,7 +518,7 @@ void OscSession::handleFileCompleteAck(const nd::OscPkg *pkg)
 
     auto it = zmodemFileMapM.find(file_complete_ack->id());
     if (it == zmodemFileMapM.end()){
-        asynHandleEvent(DESTROY_EVT);
+        asynHandleEvent(RESET_EVT);
         return;
     }
 
@@ -509,6 +527,199 @@ void OscSession::handleFileCompleteAck(const nd::OscPkg *pkg)
     asynHandleEvent(NEXT_EVT);
     return;
 
+}
+
+//-----------------------------------------------------------------------------
+
+void OscSession::sendInitRecv()
+{
+    flatbuffers::FlatBufferBuilder fbb;
+    auto init_recv = nd::CreateInitRecv(fbb);
+    nd::OscPkgBuilder builder(fbb);
+    builder.add_init_recv(init_recv);
+    builder.add_pkg_type(nd::PkgType_InitRecv);
+    fbb.Finish(builder.Finish());
+
+    auto fb_buf = fbb.GetBufferPointer();
+    auto fb_len = fbb.GetSize();
+
+    sendPkg(fb_buf, fb_len);
+    LOG_SE_INFO("[sendInitRecv]");
+
+}
+
+//-----------------------------------------------------------------------------
+
+void OscSession::handleFileInfo(const nd::OscPkg* pkg)
+{
+    if (pkg->pkg_type() != nd::PkgType_FileInfo){
+        asynHandleEvent(RESET_EVT);
+        return;
+    }
+
+    auto fileinfo = pkg->file_info();
+    const char* filename = fileinfo->relative_path() == nullptr ? "" : fileinfo->relative_path()->c_str();
+
+    auto it = zmodemFileMapM.find(fileinfo->id());
+    if (it != zmodemFileMapM.end()) {
+        LOG_SE_ERROR("[handleFileInfo]file is already transfered!id:"
+            << fileinfo->id() << ", filename:" << it->second->getFilename().c_str());
+        sendByeOnResetM = true;
+        handleEvent(RESET_EVT);
+        return;
+    }
+
+    auto zmodemFile = new ZmodemFile(g_options->getServerWorkingDir(), filename, fileinfo->filesize());
+    zmodemFile->setFileId(fileinfo->id());
+    zmodemFileMapM[fileinfo->id()] = zmodemFile;
+
+    uint32_t existCrc = 0;
+    uint64_t len = zmodemFile->getExistLen(existCrc);
+
+    flatbuffers::FlatBufferBuilder fbb;
+    auto file_propose_start = nd::CreateFileProposeStart(fbb, fileinfo->id(), len, existCrc);
+    nd::OscPkgBuilder builder(fbb);
+    builder.add_file_propose_start(file_propose_start);
+    builder.add_pkg_type(nd::PkgType_FileProposeStart);
+    fbb.Finish(builder.Finish());
+
+    auto fb_buf = fbb.GetBufferPointer();
+    auto fb_len = fbb.GetSize();
+
+    sendPkg(fb_buf, fb_len);
+
+    LOG_SE_INFO("[handleFileInfo]id:" << fileinfo->id()
+            << ", filename:" << filename);
+}
+
+//-----------------------------------------------------------------------------
+
+void OscSession::handleFileInitPos(const nd::OscPkg* pkg)
+{
+    if (pkg->pkg_type() != nd::PkgType_FileInitPos){
+        asynHandleEvent(RESET_EVT);
+        return;
+    }
+
+    auto file_init_pos = pkg->file_init_pos();
+    auto it = zmodemFileMapM.find(file_init_pos->id());
+    if (it == zmodemFileMapM.end()) {
+        LOG_SE_ERROR("ERROR: [handleFileInitPos]file not found:" << file_init_pos->id());
+        sendByeOnResetM = true;
+        handleEvent(RESET_EVT);
+        return ;
+    }
+
+    auto zmodemFile = it->second;
+    zmodemFile->openWrite(file_init_pos->offset() > 0);
+    zmodemFile->setWritePos(file_init_pos->offset());
+    LOG_SE_INFO("[handleFileInitPos]id:" << file_init_pos->id()
+            << ", pos:" << file_init_pos->offset());
+}
+
+//-----------------------------------------------------------------------------
+
+void OscSession::handleFileContent(const nd::OscPkg* pkg)
+{
+    if (pkg->pkg_type() != nd::PkgType_FileContent){
+        asynHandleEvent(RESET_EVT);
+        return;
+    }
+    auto file_content = pkg->file_content();
+    auto it = zmodemFileMapM.find(file_content->id());
+    if (it == zmodemFileMapM.end()) {
+        LOG_SE_ERROR("ERROR: [handleFileContent]file not found:" 
+            << file_content->id());
+        sendByeOnResetM = true;
+        handleEvent(RESET_EVT);
+        return ;
+    }
+
+    auto zmodemFile = it->second;
+    if (zmodemFile->getPos() != file_content->offset()) {
+        LOG_SE_ERROR("ERROR: [handleFileContent]offset error!id:" << file_content->id()
+                << ", pkg offset:" << file_content->offset()
+                << ", file offset:" << zmodemFile->getPos());
+        sendByeOnResetM = true;
+        handleEvent(RESET_EVT);
+        return ;
+    }
+
+    auto content = file_content->content();
+    uint32_t pkg_crc32 = file_content->crc32();
+    uint32_t content_crc32 = calcBufferCrc32(content->c_str(), content->size());
+    if (pkg_crc32 != content_crc32) {
+        LOG_SE_ERROR("ERROR: [handleFileContent]crc error!id:" << file_content->id()
+            << ", pkg offset:" << file_content->offset()
+            << ", content crc32:0x" << std::hex << content_crc32 << std::dec
+            << ", crc32:0x" << std::hex << pkg_crc32 << std::dec);
+        sendByeOnResetM = true;
+        handleEvent(RESET_EVT);
+        return ;
+    }
+    zmodemFile->write(content->c_str(), content->size());
+    LOG_SE_INFO("[handleFileContent]id:" << zmodemFile->getFileId() 
+            << ", offset:" << file_content->offset() 
+            << ", len:" << content->size()
+            << ", crc32:0x" << std::hex << pkg_crc32 << std::dec
+            << ", file:" << zmodemFile->getFilename());
+
+}
+
+//-----------------------------------------------------------------------------
+
+void OscSession::handleFileComplete(const nd::OscPkg* pkg)
+{
+    if (pkg->pkg_type() != nd::PkgType_FileComplete){
+        asynHandleEvent(RESET_EVT);
+        return;
+    }
+    auto file_complete = pkg->file_complete();
+    auto it = zmodemFileMapM.find(file_complete->id());
+    if (it == zmodemFileMapM.end()) {
+        LOG_SE_ERROR("ERROR: [handleFileComplete]file not found:" << file_complete->id());
+        sendByeOnResetM = true;
+        handleEvent(RESET_EVT);
+        return;
+    }
+
+    auto zmodemFile = it->second;
+    if ((zmodemFile->isGood() && zmodemFile->getPos() != file_complete->filesize()) 
+        || (zmodemFile->getSize() != file_complete->filesize())){
+        LOG_SE_ERROR("ERROR: [handleFileComplete]filesize mis-matched:id:" << file_complete->id()
+            << ", local:" << zmodemFile->getPos()
+            << ", pkg:" << file_complete->filesize());
+        sendByeOnResetM = true;
+        handleEvent(RESET_EVT);
+        return;
+    }
+    LOG_SE_INFO("[handleFileComplete]id:" << zmodemFile->getFileId() 
+            << ", len:" << file_complete->filesize()
+            << ", file:" << zmodemFile->getFilename());
+
+    sendFileCompleteAck(file_complete->id());
+
+    zmodemFileMapM.erase(it);
+    delete zmodemFile;
+}
+
+//-----------------------------------------------------------------------------
+
+void OscSession::sendFileCompleteAck(uint32_t fileId)
+{
+    flatbuffers::FlatBufferBuilder fbb;
+	auto pkg = nd::CreateFileCompleteAck(fbb, fileId);
+	nd::OscPkgBuilder builder(fbb);
+	builder.add_file_complete_ack(pkg);
+	builder.add_pkg_type(nd::PkgType_FileCompleteAck);
+	fbb.Finish(builder.Finish());
+
+	auto fb_buf = fbb.GetBufferPointer();
+	auto fb_len = fbb.GetSize();
+
+	sendPkg(fb_buf, fb_len);
+
+    LOG_SE_INFO("[sendFileCompleteAck]id:" << fileId);
 }
 
 //-----------------------------------------------------------------------------
@@ -534,18 +745,16 @@ void OscSession::sendBye()
 void OscSession::sendByeBye()
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto bye = nd::CreateBye(fbb);
+    auto byebye = nd::CreateByeBye(fbb);
     nd::OscPkgBuilder builder(fbb);
-    builder.add_bye(bye);
-    builder.add_pkg_type(nd::PkgType_Bye);
+    builder.add_byebye(byebye);
+    builder.add_pkg_type(nd::PkgType_ByeBye);
     fbb.Finish(builder.Finish());
 
     auto fb_buf = fbb.GetBufferPointer();
     auto fb_len = fbb.GetSize();
 
     sendPkg(fb_buf, fb_len);
-
-    asynHandleEvent(RESET_EVT);
     LOG_SE_INFO("[sendByeBye]");
 }
 

@@ -35,6 +35,7 @@ public:
 	{
 		INIT_STATE = 1,
         SEND_FILE_INFO_STATE,
+        INIT_RECV_STATE,
 		IDLE_STATE,
 		SEND_DATA_STATE,
 		WAIT_DATA_STATE,
@@ -85,6 +86,13 @@ public:
     void sendFileContent();
     void sendFileComplete(ZmodemFile* zmodemFile);
     void handleFileCompleteAck(const nd::OscPkg *pkg);
+
+    void sendInitRecv();
+    void handleFileInfo(const nd::OscPkg* pkg);
+    void handleFileContent(const nd::OscPkg* pkg);
+    void handleFileInitPos(const nd::OscPkg* pkg);
+    void handleFileComplete(const nd::OscPkg* pkg);
+    void sendFileCompleteAck(uint32_t fileId);
 	void sendBye();
 	void sendByeBye();
 protected:
@@ -93,7 +101,7 @@ protected:
     int decodeLz(uint8_t* buf, int len, uint8_t* fb_buf, int fb_len);
 	void output(const char* str, ...);
 
-    virtual ZmodemFile* fetchNextFileToSend() = 0;
+    virtual ZmodemFile* fetchNextFileToSend(){return nullptr;}
 
 	char bufferM[1024*64];
 	unsigned bufferLenM;

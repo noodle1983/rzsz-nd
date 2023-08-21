@@ -69,6 +69,19 @@ ZmodemFile::ZmodemFile(
 	fullPathM = dir + "/" + filename;
 }
 
+ZmodemFile::ZmodemFile(
+    const std::string& dir, 
+    const char* filename, 
+    const uint64_t filesize)
+        : fileNameM(filename)
+        , fileSizeM(filesize)
+        , fileTimeM(0)
+        , posM(0)
+        , fileIdM(-1)
+{
+	fullPathM = dir + "/" + filename;
+}
+
 ZmodemFile::~ZmodemFile()
 {
 	fileM.close();
@@ -107,8 +120,12 @@ void ZmodemFile::openWrite(bool resume)
 
 bool ZmodemFile::write(const char* buf, unsigned long long len)
 {
-	if (!fileM.is_open() || len + posM > fileSizeM){
-        LOG_ERROR("write failed! errno:" << errno);
+	if (!fileM.is_open()){
+        LOG_ERROR("file not open! errno:" << errno);
+		return 0;
+	}
+	if (len + posM > fileSizeM){
+        LOG_ERROR("new buffer overwritten!pos:" << posM << ", len:" << len << ", filesize:" << fileSizeM);
 		return 0;
 	}
     long long pos = fileM.tellp();

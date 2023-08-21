@@ -13,6 +13,11 @@ enum PkgType: byte {
     FileComplete,
     FileCompleteAck,
 
+    InitRecv,
+    SetClientWorkingDir,
+    CreateDir,
+
+    Heartbeat,
     Bye,
     ByeBye,
 } 
@@ -54,12 +59,23 @@ table FileComplete {
     filesize : uint64;
 }
 
-//comment
 table FileCompleteAck {
     id : uint32;
 }
 
+table InitRecv {
+}
 
+table SetClientWorkingDir{
+    working_dir : string;
+}
+
+table CreateDir{
+    new_dir : string;
+}
+
+
+table Heartbeat{ }
 table Bye { }
 table ByeBye { }
 
@@ -76,6 +92,11 @@ table OscPkg{
     file_complete : FileComplete;
     file_complete_ack : FileCompleteAck;
 
+    init_recv : InitRecv;
+    set_client_working_dir : SetClientWorkingDir;
+    create_dir : CreateDir;
+
+    heartbeat : Heartbeat;
     bye : Bye;
     byebye : ByeBye;
 }

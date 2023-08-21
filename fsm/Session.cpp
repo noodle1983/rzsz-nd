@@ -76,6 +76,9 @@ int Session::asynHandleEvent(const int theEventId)
 {
     if(isToDelete()){return 0;}
 
+    LOG_DEBUG(getSessionName() 
+            << "[" << getSessionId() << "] " << getCurState().getName() << " asyncHandleEvent("
+            << getEventName(theEventId) << ")");
     ASYN_PROCESS_EVT(&Session::handleEvent, this, theEventId);
     return 0;
 }
