@@ -580,14 +580,20 @@ inline ::flatbuffers::Offset<FileCompleteAck> CreateFileCompleteAck(
 struct InitRecv FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef InitRecvBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_IS_DIR_MODE = 4
+    VT_IS_DIR_MODE = 4,
+    VT_PRESET_FILES = 6
   };
   bool is_dir_mode() const {
     return GetField<uint8_t>(VT_IS_DIR_MODE, 0) != 0;
   }
+  const ::flatbuffers::String *preset_files() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_PRESET_FILES);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_IS_DIR_MODE, 1) &&
+           VerifyOffset(verifier, VT_PRESET_FILES) &&
+           verifier.VerifyString(preset_files()) &&
            verifier.EndTable();
   }
 };
@@ -598,6 +604,9 @@ struct InitRecvBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_is_dir_mode(bool is_dir_mode) {
     fbb_.AddElement<uint8_t>(InitRecv::VT_IS_DIR_MODE, static_cast<uint8_t>(is_dir_mode), 0);
+  }
+  void add_preset_files(::flatbuffers::Offset<::flatbuffers::String> preset_files) {
+    fbb_.AddOffset(InitRecv::VT_PRESET_FILES, preset_files);
   }
   explicit InitRecvBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -612,10 +621,23 @@ struct InitRecvBuilder {
 
 inline ::flatbuffers::Offset<InitRecv> CreateInitRecv(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    bool is_dir_mode = false) {
+    bool is_dir_mode = false,
+    ::flatbuffers::Offset<::flatbuffers::String> preset_files = 0) {
   InitRecvBuilder builder_(_fbb);
+  builder_.add_preset_files(preset_files);
   builder_.add_is_dir_mode(is_dir_mode);
   return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<InitRecv> CreateInitRecvDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    bool is_dir_mode = false,
+    const char *preset_files = nullptr) {
+  auto preset_files__ = preset_files ? _fbb.CreateString(preset_files) : 0;
+  return nd::CreateInitRecv(
+      _fbb,
+      is_dir_mode,
+      preset_files__);
 }
 
 struct SetClientWorkingDir FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

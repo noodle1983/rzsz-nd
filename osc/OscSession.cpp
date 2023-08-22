@@ -581,7 +581,7 @@ void OscSession::handleFileCompleteAck(const nd::OscPkg *pkg)
 void OscSession::sendInitRecv()
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto init_recv = nd::CreateInitRecv(fbb, g_options->rzDirModeM);
+    auto init_recv = nd::CreateInitRecvDirect(fbb, g_options->rzDirModeM, g_options->getPresetRzFiles().c_str());
     nd::OscPkgBuilder builder(fbb);
     builder.add_init_recv(init_recv);
     builder.add_pkg_type(nd::PkgType_InitRecv);

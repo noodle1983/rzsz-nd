@@ -65,6 +65,7 @@ table FileCompleteAck {
 
 table InitRecv {
     is_dir_mode : bool;
+    preset_files : string;
 }
 
 table SetClientWorkingDir{
