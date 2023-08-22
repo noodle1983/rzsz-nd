@@ -11,7 +11,7 @@
 #include <string>
 #include <fstream>
 
-void createDir(const std::string& thePath);
+bool createDir(const std::string& thePath);
 
 class ZmodemFile
 {

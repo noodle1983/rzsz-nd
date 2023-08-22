@@ -152,7 +152,11 @@ void OscSession::parsePkg()
             auto empty_dir = pkg->empty_dir();
             auto dir = empty_dir->dir();
             if (dir && dir->size() > 0) {
-                createDir(g_options->getServerWorkingDir() + "/" + dir->c_str());
+                auto new_dir = g_options->getServerWorkingDir() + "/" + dir->c_str();
+                bool ret = createDir(new_dir);
+                if (ret){
+                    LOG_SE_INFO("[EmptyDir]create dir:" << new_dir);
+                }
             }
         }
         else if (pkg->pkg_type() == nd::PkgType_Heartbeat){

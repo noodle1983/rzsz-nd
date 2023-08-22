@@ -17,10 +17,10 @@
 
 uint32_t ZmodemFile::nextFileIdM = 0; 
 
-void createDir(const std::string& thePath)
+bool createDir(const std::string& thePath)
 {
     if (thePath.empty())
-        return;
+        return false;
 
     size_t pos = 0;
 	while ((pos = thePath.find_first_of("/\\", pos)) != std::string::npos) 
@@ -35,7 +35,7 @@ void createDir(const std::string& thePath)
         }
         if (errno != ENOENT)
         {
-            return;
+            return false;
         }
 
         mkdir(preDir.c_str(), 0774); 
@@ -44,13 +44,14 @@ void createDir(const std::string& thePath)
     if (dir != NULL)
     {
         closedir(dir);
-        return;
+        return false;
     }
     if (errno != ENOENT)
     {
-        return;
+        return false;
     }
     mkdir(thePath.c_str(), 0774); 
+    return true;
 }
 
 
