@@ -29,7 +29,8 @@ nd::FiniteStateMachine* RfSession::getZmodemFsm()
         (*fsm) += FSM_STATE(INIT_STATE);
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,      SE_FUNC(OscSession, initState));
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,      SE_FUNC(OscSession, sendInitReq));
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,      NEW_TIMER(3000));
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,      NEW_TIMER(1500));
+        (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,    SE_FUNC(OscSession, unsupportNotice));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,    CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(RESET_EVT,      CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(OscSession, parsePkg));

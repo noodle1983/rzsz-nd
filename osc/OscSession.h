@@ -96,6 +96,7 @@ public:
     void sendFileCompleteAck(uint32_t fileId);
 	void sendBye();
 	void sendByeBye();
+    void unsupportNotice();
 protected:
     void sendPkg(const uint8_t* fb_buf, int fb_len);
     int encodeLz(const uint8_t* fb_buf, int fb_len, uint8_t* buf, int len);

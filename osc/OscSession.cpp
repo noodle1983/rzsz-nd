@@ -813,6 +813,19 @@ void OscSession::sendByeBye()
     LOG_SE_INFO("[sendByeBye]");
 }
 
+//-----------------------------------------------------------------------------
+
+void OscSession::unsupportNotice()
+{
+    std::cout << "Notice: no response is detected for InitReq.\r\n"
+        << "Please make sure you have putty-nd(>=7.20, https://sourceforge.net/projects/putty-nd ) installed.\r\n";
+    if (g_options->isInTmux())
+    {
+        std::cout << "\r\n";
+        std::cout << "And tmux is detected.\r\n" 
+            << "Please make sure passthrough feature is on.(`tmux set allow-passthrough on` | 'set -g allow-passthrough on' in ~/.tmux.conf)\r\n";
+    }
+}
 
 //-----------------------------------------------------------------------------
 
