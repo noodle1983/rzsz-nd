@@ -77,6 +77,7 @@ public:
 
     // sz files
     std::vector<ZmodemFile*> filesM;
+    std::vector<std::string> emptyDirsM;
 
     // rz files
     bool rzDirModeM;

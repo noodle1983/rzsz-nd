@@ -21,7 +21,7 @@ void parseOption(int argc, char const *argv[]){
 	try {
         TCLAP::CmdLine cmd("Send file(s) with ZMODEM protocol.", ' ', "0.1");
 
-        TCLAP::UnlabeledMultiArg<string> multiArg("filepath", "files to sent", true, "string[]");
+        TCLAP::UnlabeledMultiArg<string> multiArg("file_or_dir_path", "files/directory to sent", true, "string[]");
         cmd.add(multiArg);
 
         g_options->addCommonOptions(cmd);

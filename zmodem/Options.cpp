@@ -70,6 +70,13 @@ void Options::addFiles(TCLAP::UnlabeledMultiArg<string>& optionsFiles)
                     string rePath = abPath.substr(base.length() + 1);
                     checkAddFile(abPath, rePath, filesM);
                 }
+                else{
+                    if (fs::is_empty(childFsPath)){
+                        string abPath = childFsPath;
+                        string rePath = abPath.substr(base.length() + 1);
+                        emptyDirsM.push_back(rePath);
+                    }
+                }
             }
         }
         else{

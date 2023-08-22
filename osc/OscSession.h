@@ -80,6 +80,7 @@ public:
 	}
 
 	void sendInitReq();
+    void sendEmptyDirs();
     void sendFileInfo();
     void handleFileProposeStart(const nd::OscPkg *pkg);
     void sendFileInitPos(ZmodemFile* zmodemFile);

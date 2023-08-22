@@ -15,7 +15,7 @@ enum PkgType: byte {
 
     InitRecv,
     SetClientWorkingDir,
-    CreateDir,
+    EmptyDir,
 
     Heartbeat,
     Bye,
@@ -64,14 +64,15 @@ table FileCompleteAck {
 }
 
 table InitRecv {
+    is_dir_mode : bool;
 }
 
 table SetClientWorkingDir{
     working_dir : string;
 }
 
-table CreateDir{
-    new_dir : string;
+table EmptyDir{
+    dir : string;
 }
 
 
@@ -94,7 +95,7 @@ table OscPkg{
 
     init_recv : InitRecv;
     set_client_working_dir : SetClientWorkingDir;
-    create_dir : CreateDir;
+    empty_dir : EmptyDir;
 
     heartbeat : Heartbeat;
     bye : Bye;

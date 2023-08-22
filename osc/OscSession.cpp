@@ -127,6 +127,8 @@ void OscSession::parsePkg()
             peerVersionM = pkg->init_rsp()->version();
             asynHandleEvent(NEXT_EVT);
             LOG_SE_INFO("[handleInitRsp]version:" << (int)peerVersionM);
+
+            sendClientWorkingDir();
         }
         else if (pkg->pkg_type() == nd::PkgType_FileInfo){
             handleFileInfo(pkg);
@@ -145,6 +147,13 @@ void OscSession::parsePkg()
         }
         else if (pkg->pkg_type() == nd::PkgType_FileComplete){
             handleFileComplete(pkg);
+        }
+        else if (pkg->pkg_type() == nd::PkgType_EmptyDir){
+            auto empty_dir = pkg->empty_dir();
+            auto dir = empty_dir->dir();
+            if (dir && dir->size() > 0) {
+                createDir(g_options->getServerWorkingDir() + "/" + dir->c_str());
+            }
         }
         else if (pkg->pkg_type() == nd::PkgType_Heartbeat){
             resetTimer();
@@ -261,10 +270,21 @@ void OscSession::deleteSelf(nd::Session* session)
 
 void OscSession::sendClientWorkingDir()
 {
-    auto clientWorkingDir = g_options->getClientWorkingDir();
+    auto& clientWorkingDir = g_options->getClientWorkingDir();
     if(clientWorkingDir.empty()){return;}
 
-    //sendZCommand(ZCMD_SET_CLIENT_WORKDIR, "%s", clientWorkingDir.c_str());
+    flatbuffers::FlatBufferBuilder fbb;
+    auto req = nd::CreateSetClientWorkingDirDirect(fbb, clientWorkingDir.c_str());
+    nd::OscPkgBuilder builder(fbb);
+    builder.add_set_client_working_dir(req);
+    builder.add_pkg_type(nd::PkgType_SetClientWorkingDir);
+    fbb.Finish(builder.Finish());
+
+    auto fb_buf = fbb.GetBufferPointer();
+    auto fb_len = fbb.GetSize();
+
+    sendPkg(fb_buf, fb_len);
+    LOG_SE_INFO("[sendClientWorkingDir]" << clientWorkingDir.c_str()) ;
 }
 
 //-----------------------------------------------------------------------------
@@ -327,6 +347,29 @@ void OscSession::sendInitReq()
 
     sendPkg(fb_buf, fb_len);
     LOG_SE_INFO("[sendInitReq]version:" << (int)OSC_VERSION) ;
+}
+
+//-----------------------------------------------------------------------------
+
+void OscSession::sendEmptyDirs()
+{
+    auto& emptyDirs = g_options->emptyDirsM;
+    if (emptyDirs.empty()){return;}
+
+    for(auto& dir : emptyDirs){
+        flatbuffers::FlatBufferBuilder fbb;
+        auto empty_dir = nd::CreateEmptyDirDirect(fbb, dir.c_str());
+        nd::OscPkgBuilder builder(fbb);
+        builder.add_empty_dir(empty_dir);
+        builder.add_pkg_type(nd::PkgType_EmptyDir);
+        fbb.Finish(builder.Finish());
+
+        auto fb_buf = fbb.GetBufferPointer();
+        auto fb_len = fbb.GetSize();
+
+        sendPkg(fb_buf, fb_len);
+        LOG_SE_INFO("[sendEmptyDirs]dir:" << dir.c_str());
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -534,7 +577,7 @@ void OscSession::handleFileCompleteAck(const nd::OscPkg *pkg)
 void OscSession::sendInitRecv()
 {
     flatbuffers::FlatBufferBuilder fbb;
-    auto init_recv = nd::CreateInitRecv(fbb);
+    auto init_recv = nd::CreateInitRecv(fbb, g_options->rzDirModeM);
     nd::OscPkgBuilder builder(fbb);
     builder.add_init_recv(init_recv);
     builder.add_pkg_type(nd::PkgType_InitRecv);
