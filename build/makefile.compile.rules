@@ -1,13 +1,13 @@
 ##############################################################################
-# Licensing Information                                                      #
-#    This is a release of rzsz-nd, brought to you by Dong Lu(noodle1983@126  #
-#    .com). Except for extra permissions from Dong Lu(noodle1983@126.com),   #
-#    this software is released under version 3 of the GNU General            #
-#    Public License (GPLv3).                                                 #
+# Licensing Information	                                                  #
+#	This is a release of rzsz-nd, brought to you by Dong Lu(noodle1983@126  #
+#	.com). Except for extra permissions from Dong Lu(noodle1983@126.com),   #
+#	this software is released under version 3 of the GNU General            #
+#	Public License (GPLv3).                                                 #
 ##############################################################################
 
 #########################################
-#          OUT DIR                      #
+#	      OUT DIR                      #
 #########################################
 DIR_LIST=$(subst /, \ , $(CURDIR))
 MOD_NAME=$(word $(words $(DIR_LIST)), $(DIR_LIST))
@@ -24,20 +24,20 @@ OUTDIR_PREFIX=$(PROJBASE)/.lib
 OUTDIR=$(OUTDIR_PREFIX)/$(MOD_NAME)
 
 #########################################
-#               OBJECTS                 #
+#	           OBJECTS                 #
 #########################################
 CFILES=$(foreach DIR, $(SUBDIR), $(wildcard $(DIR)/*.c))
 CPPFILES=$(foreach DIR, $(SUBDIR), $(wildcard $(DIR)/*.cpp))
 TMPOBJECTS=$(patsubst %.cpp, %.o, $(CPPFILES)) \
-           $(patsubst %.c, %.o, $(CFILES)) 
+	       $(patsubst %.c, %.o, $(CFILES)) 
 OUTSUBDIR=$(addprefix $(OUTDIR)/, $(SUBDIR))
-    
+	
 TMP_PATH_OBJECTS=$(addprefix $(OUTDIR)/, $(TMPOBJECTS))
 DEBUG_OBJECTS=$(patsubst %.o, %$(DEBUG_SUFFIX).o, $(TMP_PATH_OBJECTS))
 RELEASE_OBJECTS=$(patsubst %.o, %$(RELEASE_SUFFIX).o, $(TMP_PATH_OBJECTS))
 
 #########################################
-#         Exe    Target                 #
+#	     Exe    Target                 #
 #########################################
 EXEDIR=exe
 EXE_OUTDIR=$(OUTDIR_PREFIX)/$(EXEDIR)
@@ -53,8 +53,17 @@ RELEASE_TMPEXEOBJECTS=$(patsubst %.cpp, %$(RELEASE_SUFFIX).o, $(EXECPPFILES))
 RELEASE_EXEOBJECTS=$(addprefix $(OUTDIR)/, $(RELEASE_TMPEXEOBJECTS))
 RELEASE_EXETARGET=$(basename $(notdir $(RELEASE_EXEOBJECTS)))
 RELEASE_TARGET+=$(RELEASE_EXETARGET)
+
 #########################################
-#               Dependance              #
+#	    Auto TARGET                    #
+#########################################
+AUTOMSGDEF=$(wildcard idl/*.fbs)
+AUTOMSGTARGET=$(patsubst %.fbs, %_generated.h, $(AUTOMSGDEF))
+
+AUTOTARGET=$(AUTOMSGTARGET)
+
+#########################################
+#	           Dependance              #
 #########################################
 DEBUG_DEPENDFILES=$(patsubst %.o, %.d, $(DEBUG_OBJECTS))
 DEBUG_DEPENDTARGET=$(patsubst %.d, %.d.tmp, $(DEBUG_DEPENDFILES))
@@ -67,32 +76,32 @@ RELEASE_EXEDEPENDFILES=$(patsubst %.o, %.d, $(RELEASE_EXEOBJECTS))
 RELEASE_EXEDEPENDTARGET=$(patsubst %.d, %.d.tmp, $(RELEASE_EXEDEPENDFILES))
 
 #########################################
-#           Makefile Dependance         #
+#	       Makefile Dependance         #
 #########################################
 DEPENDMAKEFILES=$(wildcard build/makefile.*)
 
 #########################################
-#             FUNCTION                  #
+#	         FUNCTION                  #
 #########################################
 # $(1): static_target
 # $(2): objects
 define build_static_lib
-    @if [ "$(2)" != "" ]; then \
-        echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2)"; \
-        $(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2); \
-        echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
-        echo ""; \
-    fi
+	@if [ "$(2)" != "" ]; then \
+	    echo "$(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2)"; \
+	    $(AR) $(ARFLAGS) $(OUTDIR_PREFIX)/$(1) $(2); \
+	    echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
+	    echo ""; \
+	fi
 endef
 
 # $(1): shared_target
 # $(2): objects
 define build_shared_lib
-    @if [ "$(2)" != "" ]; then \
-        echo "$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2)"; \
-        $(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2); \
-        echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
-        echo ""; \
+	@if [ "$(2)" != "" ]; then \
+	    echo "$(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2)"; \
+	    $(CC) $(SHAREDFLAG) -o $(OUTDIR_PREFIX)/$(1) $(2); \
+	    echo " $(2) " > $(OUTDIR_PREFIX)/$(MOD_NAME)$(SUFFIX).objectlist; \
+	    echo ""; \
 	fi;
 endef
 
@@ -109,7 +118,7 @@ define build_dependency
 endef
 
 #########################################
-#               Rules                   #
+#	           Rules                   #
 #########################################
 all:SUFFIX=$(RELEASE_SUFFIX)
 all:CFLAGS+=$(RELEASE_CFLAGS)
@@ -190,10 +199,13 @@ $(OUTDIR)/%$(RELEASE_SUFFIX).o:%.c $(DEPENDMAKEFILES)
 	$(cc) $(CFLAGS) -c $< -o $@
 	@echo ""
 
-debug_depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(DEBUG_DEPENDTARGET)
-debug_exedepend: $(OUTDIR) $(EXEOUTSUBDIR) $(EXE_OUTDIR) $(DEPENDMAKEFILES) $(DEBUG_EXEDEPENDTARGET)
-release_depend: $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(RELEASE_DEPENDTARGET)
-release_exedepend: $(OUTDIR) $(EXEOUTSUBDIR) $(EXE_OUTDIR) $(DEPENDMAKEFILES) $(RELEASE_EXEDEPENDTARGET)
+idl/%_generated.h:idl/%.fbs
+	flatc -o idl/ -c $< 
+
+debug_depend: $(AUTOTARGET) $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(DEBUG_DEPENDTARGET)
+debug_exedepend: $(AUTOTARGET) $(OUTDIR) $(EXEOUTSUBDIR) $(EXE_OUTDIR) $(DEPENDMAKEFILES) $(DEBUG_EXEDEPENDTARGET)
+release_depend: $(AUTOTARGET) $(OUTDIR) $(OUTSUBDIR) $(DEPENDMAKEFILES) $(RELEASE_DEPENDTARGET)
+release_exedepend:$(AUTOTARGET) $(OUTDIR) $(EXEOUTSUBDIR) $(EXE_OUTDIR) $(DEPENDMAKEFILES) $(RELEASE_EXEDEPENDTARGET)
 
 FORCE:
 
