@@ -22,14 +22,15 @@
 
 class FileLogger{
 public:
-    FileLogger(){
-        outM.open(g_options->getLogfile());
-    }
+    FileLogger(){}
 
     void setExePrefix(const std::string& exePrefix){exePrefixM = exePrefix;}
     const std::string& getExePrefix(){return exePrefixM;}
 
     std::ofstream& stream(const char* levelStr, const char* file, const unsigned lineno){
+        if (!outM.is_open()){
+            outM.open(g_options->getLogfile());
+        }
         time_t rawTime;
         struct tm info;
         char timeStr[80];
@@ -45,7 +46,9 @@ public:
     std::mutex& mutex(){return mutexM;}
 
     virtual ~FileLogger(){
-        outM.flush();
+        if (outM.is_open()){
+            outM.flush();
+        }
     }
 
 private:
