@@ -48,6 +48,9 @@ struct SetClientWorkingDirBuilder;
 struct EmptyDir;
 struct EmptyDirBuilder;
 
+struct ErrMsg;
+struct ErrMsgBuilder;
+
 struct Heartbeat;
 struct HeartbeatBuilder;
 
@@ -76,11 +79,12 @@ enum PkgType : int8_t {
   PkgType_Heartbeat = 12,
   PkgType_Bye = 13,
   PkgType_ByeBye = 14,
+  PkgType_ErrMsg = 15,
   PkgType_MIN = PkgType_Invalid,
-  PkgType_MAX = PkgType_ByeBye
+  PkgType_MAX = PkgType_ErrMsg
 };
 
-inline const PkgType (&EnumValuesPkgType())[15] {
+inline const PkgType (&EnumValuesPkgType())[16] {
   static const PkgType values[] = {
     PkgType_Invalid,
     PkgType_InitReq,
@@ -96,13 +100,14 @@ inline const PkgType (&EnumValuesPkgType())[15] {
     PkgType_EmptyDir,
     PkgType_Heartbeat,
     PkgType_Bye,
-    PkgType_ByeBye
+    PkgType_ByeBye,
+    PkgType_ErrMsg
   };
   return values;
 }
 
 inline const char * const *EnumNamesPkgType() {
-  static const char * const names[16] = {
+  static const char * const names[17] = {
     "Invalid",
     "InitReq",
     "InitRsp",
@@ -118,13 +123,14 @@ inline const char * const *EnumNamesPkgType() {
     "Heartbeat",
     "Bye",
     "ByeBye",
+    "ErrMsg",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNamePkgType(PkgType e) {
-  if (::flatbuffers::IsOutRange(e, PkgType_Invalid, PkgType_ByeBye)) return "";
+  if (::flatbuffers::IsOutRange(e, PkgType_Invalid, PkgType_ErrMsg)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesPkgType()[index];
 }
@@ -742,6 +748,57 @@ inline ::flatbuffers::Offset<EmptyDir> CreateEmptyDirDirect(
       dir__);
 }
 
+struct ErrMsg FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef ErrMsgBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_MSG = 4
+  };
+  const ::flatbuffers::String *msg() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_MSG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_MSG) &&
+           verifier.VerifyString(msg()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ErrMsgBuilder {
+  typedef ErrMsg Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_msg(::flatbuffers::Offset<::flatbuffers::String> msg) {
+    fbb_.AddOffset(ErrMsg::VT_MSG, msg);
+  }
+  explicit ErrMsgBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<ErrMsg> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<ErrMsg>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<ErrMsg> CreateErrMsg(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> msg = 0) {
+  ErrMsgBuilder builder_(_fbb);
+  builder_.add_msg(msg);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<ErrMsg> CreateErrMsgDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *msg = nullptr) {
+  auto msg__ = msg ? _fbb.CreateString(msg) : 0;
+  return nd::CreateErrMsg(
+      _fbb,
+      msg__);
+}
+
 struct Heartbeat FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef HeartbeatBuilder Builder;
   bool Verify(::flatbuffers::Verifier &verifier) const {
@@ -844,9 +901,10 @@ struct OscPkg FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_INIT_RECV = 22,
     VT_SET_CLIENT_WORKING_DIR = 24,
     VT_EMPTY_DIR = 26,
-    VT_HEARTBEAT = 28,
-    VT_BYE = 30,
-    VT_BYEBYE = 32
+    VT_ERR_MSG = 28,
+    VT_HEARTBEAT = 30,
+    VT_BYE = 32,
+    VT_BYEBYE = 34
   };
   nd::PkgType pkg_type() const {
     return static_cast<nd::PkgType>(GetField<int8_t>(VT_PKG_TYPE, 0));
@@ -884,6 +942,9 @@ struct OscPkg FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const nd::EmptyDir *empty_dir() const {
     return GetPointer<const nd::EmptyDir *>(VT_EMPTY_DIR);
   }
+  const nd::ErrMsg *err_msg() const {
+    return GetPointer<const nd::ErrMsg *>(VT_ERR_MSG);
+  }
   const nd::Heartbeat *heartbeat() const {
     return GetPointer<const nd::Heartbeat *>(VT_HEARTBEAT);
   }
@@ -918,6 +979,8 @@ struct OscPkg FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyTable(set_client_working_dir()) &&
            VerifyOffset(verifier, VT_EMPTY_DIR) &&
            verifier.VerifyTable(empty_dir()) &&
+           VerifyOffset(verifier, VT_ERR_MSG) &&
+           verifier.VerifyTable(err_msg()) &&
            VerifyOffset(verifier, VT_HEARTBEAT) &&
            verifier.VerifyTable(heartbeat()) &&
            VerifyOffset(verifier, VT_BYE) &&
@@ -968,6 +1031,9 @@ struct OscPkgBuilder {
   void add_empty_dir(::flatbuffers::Offset<nd::EmptyDir> empty_dir) {
     fbb_.AddOffset(OscPkg::VT_EMPTY_DIR, empty_dir);
   }
+  void add_err_msg(::flatbuffers::Offset<nd::ErrMsg> err_msg) {
+    fbb_.AddOffset(OscPkg::VT_ERR_MSG, err_msg);
+  }
   void add_heartbeat(::flatbuffers::Offset<nd::Heartbeat> heartbeat) {
     fbb_.AddOffset(OscPkg::VT_HEARTBEAT, heartbeat);
   }
@@ -1002,6 +1068,7 @@ inline ::flatbuffers::Offset<OscPkg> CreateOscPkg(
     ::flatbuffers::Offset<nd::InitRecv> init_recv = 0,
     ::flatbuffers::Offset<nd::SetClientWorkingDir> set_client_working_dir = 0,
     ::flatbuffers::Offset<nd::EmptyDir> empty_dir = 0,
+    ::flatbuffers::Offset<nd::ErrMsg> err_msg = 0,
     ::flatbuffers::Offset<nd::Heartbeat> heartbeat = 0,
     ::flatbuffers::Offset<nd::Bye> bye = 0,
     ::flatbuffers::Offset<nd::ByeBye> byebye = 0) {
@@ -1009,6 +1076,7 @@ inline ::flatbuffers::Offset<OscPkg> CreateOscPkg(
   builder_.add_byebye(byebye);
   builder_.add_bye(bye);
   builder_.add_heartbeat(heartbeat);
+  builder_.add_err_msg(err_msg);
   builder_.add_empty_dir(empty_dir);
   builder_.add_set_client_working_dir(set_client_working_dir);
   builder_.add_init_recv(init_recv);

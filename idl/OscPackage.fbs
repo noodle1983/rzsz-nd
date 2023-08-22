@@ -20,6 +20,8 @@ enum PkgType: byte {
     Heartbeat,
     Bye,
     ByeBye,
+
+    ErrMsg,
 } 
 
 table InitReq {
@@ -76,6 +78,10 @@ table EmptyDir{
     dir : string;
 }
 
+table ErrMsg{
+    msg : string;
+}
+
 
 table Heartbeat{ }
 table Bye { }
@@ -98,6 +104,7 @@ table OscPkg{
     set_client_working_dir : SetClientWorkingDir;
     empty_dir : EmptyDir;
 
+    err_msg : ErrMsg;
     heartbeat : Heartbeat;
     bye : Bye;
     byebye : ByeBye;

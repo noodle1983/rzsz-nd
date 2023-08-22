@@ -174,6 +174,12 @@ void OscSession::parsePkg()
             asynHandleEvent(RESET_EVT);
             LOG_SE_INFO("[handleByeBye]");
         }
+        else if (pkg->pkg_type() == nd::PkgType_ErrMsg){
+            auto msg = pkg->err_msg()->msg();
+            if (msg != nullptr && msg->size() > 0){
+                LOG_SE_ERROR("[handleErrMsg]" << msg->c_str());
+            }
+        }
         else {
             LOG_SE_ERROR("[parsePkg]unkonwn pkg:" << EnumNamePkgType(pkg->pkg_type()));
             asynHandleEvent(RESET_EVT);
@@ -591,7 +597,8 @@ void OscSession::sendInitRecv()
     auto fb_len = fbb.GetSize();
 
     sendPkg(fb_buf, fb_len);
-    LOG_SE_INFO("[sendInitRecv]");
+    LOG_SE_INFO("[sendInitRecv]preset:[" << g_options->getPresetRzFiles() << "]"
+            << ", is_idr_mode:" << g_options->rzDirModeM);
 
 }
 
