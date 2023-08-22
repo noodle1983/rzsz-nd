@@ -177,7 +177,8 @@ void OscSession::parsePkg()
         else if (pkg->pkg_type() == nd::PkgType_ErrMsg){
             auto msg = pkg->err_msg()->msg();
             if (msg != nullptr && msg->size() > 0){
-                LOG_SE_ERROR("[handleErrMsg]" << msg->c_str());
+                LOG_SE_INFO("[handleErrMsg]" << msg->c_str());
+                std::cout << msg->c_str() << std::endl;
             }
         }
         else {
