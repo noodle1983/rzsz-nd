@@ -186,6 +186,7 @@ void setTtyRawMode(){
 
 void resetTty(){
     if (!hasOldTty){return;}
+    //tcflush(STDOUT_FILENO,TCIOFLUSH); /* flush output queue */
 
     tcdrain(STDIN_FILENO); /* wait until everything is sent */
     tcflush(STDIN_FILENO,TCIOFLUSH); /* flush input queue */

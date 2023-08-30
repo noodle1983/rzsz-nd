@@ -30,7 +30,8 @@ public:
     uint64_t getExistLen(uint32_t& crc);
 	void openWrite(bool resume);
 	bool write(const char* buf, unsigned long long len);
-	unsigned long long getPos();
+	unsigned long long getPos() { return posM; }
+
 	unsigned long long getSize(){return fileSizeM;}
 	unsigned long long getFileSize(){return fileSizeM;}
 	unsigned long long getFileTime(){return fileTimeM;}

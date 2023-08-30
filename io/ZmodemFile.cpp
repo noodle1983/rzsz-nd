@@ -140,11 +140,6 @@ bool ZmodemFile::write(const char* buf, unsigned long long len)
 	return 1;
 }
 
-unsigned long long ZmodemFile::getPos()
-{
-	return posM;
-}
-
 bool ZmodemFile::parseInfo(const std::string& fileinfo)
 {
 	unsigned st_mode = 0;

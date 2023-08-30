@@ -9,8 +9,10 @@
 #define OUTPUT_H
 
 #include "Singleton.hpp"
+#include "ProgressWin.h"
 #include "Log.h"
 #include "zmodem.h"
+#include <iostream>
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -41,6 +43,7 @@ namespace nd
                     waitUntilWritable(STDOUT_FILENO);
                 }
             }while(writeIndex < len);
+            g_progress_win->updateSentBytes(len);
         }
     };
 

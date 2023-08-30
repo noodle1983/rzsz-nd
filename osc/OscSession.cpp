@@ -13,6 +13,8 @@
 #include "Version.h"
 #include "stdinput.h"
 #include "stdoutput.h"
+#include "ProgressWin.h"
+
 #include "string.h"
 extern "C" {
 #include "base64.h"
@@ -125,9 +127,11 @@ void OscSession::parsePkg()
         auto pkg = nd::GetOscPkg(decode_buf);
         if (pkg->pkg_type() == nd::PkgType_InitRsp){
             peerVersionM = pkg->init_rsp()->version();
+            auto workingDir = pkg->init_rsp()->working_dir();
             asynHandleEvent(NEXT_EVT);
             LOG_SE_INFO("[handleInitRsp]version:" << (int)peerVersionM);
 
+            g_progress_win->setClientWorkdingDir(workingDir == nullptr ? "" : workingDir->c_str());
             sendClientWorkingDir();
         }
         else if (pkg->pkg_type() == nd::PkgType_FileInfo){
@@ -178,13 +182,15 @@ void OscSession::parsePkg()
             auto msg = pkg->err_msg()->msg();
             if (msg != nullptr && msg->size() > 0){
                 LOG_SE_INFO("[handleErrMsg]" << msg->c_str());
-                std::cout << msg->c_str() << std::endl;
+                g_progress_win->addMsg(msg->c_str());
+                //std::cout << msg->c_str() << "\r\n";
             }
         }
         else {
             LOG_SE_ERROR("[parsePkg]unkonwn pkg:" << EnumNamePkgType(pkg->pkg_type()));
             asynHandleEvent(RESET_EVT);
         }
+        g_progress_win->print();
     }
 
     return;
@@ -296,6 +302,8 @@ void OscSession::sendClientWorkingDir()
 
     sendPkg(fb_buf, fb_len);
     LOG_SE_INFO("[sendClientWorkingDir]" << clientWorkingDir.c_str()) ;
+
+    g_progress_win->setClientWorkdingDir(clientWorkingDir);
 }
 
 //-----------------------------------------------------------------------------
@@ -358,6 +366,8 @@ void OscSession::sendInitReq()
 
     sendPkg(fb_buf, fb_len);
     LOG_SE_INFO("[sendInitReq]version:" << (int)OSC_VERSION) ;
+
+    g_progress_win->setServerWorkdingDir(g_options->getServerWorkingDir());
 }
 
 //-----------------------------------------------------------------------------
@@ -393,6 +403,7 @@ void OscSession::sendFileInfo()
         return;
     }
     zmodemFileMapM[zmodemFile->getFileId()] = zmodemFile;
+    g_progress_win->addFile(zmodemFile);
 
     flatbuffers::FlatBufferBuilder fbb;
     auto fb_file_info = nd::CreateFileInfoDirect(fbb, 
@@ -437,12 +448,14 @@ void OscSession::handleFileProposeStart(const nd::OscPkg *pkg)
     uint64_t validLen = zmodemFile->validateFileCrc(file_propose_start->exist_pos(), file_propose_start->exist_crc32());
     if (validLen == zmodemFile->getFileSize()){
         sendFileComplete(zmodemFile);
+        g_progress_win->updateFileDone(zmodemFile);
         return;
     }
     zmodemFile->setReadPos(validLen);
     asynHandleEvent(SEND_DATA_EVT);
 
     sendFileInitPos(zmodemFile);
+    g_progress_win->updateFile(zmodemFile);
     return;
 
 }
@@ -523,8 +536,10 @@ void OscSession::sendFileContent()
 
         if(!zmodemFile->isGood()){
             sendFileComplete(zmodemFile);
+            g_progress_win->updateFileDone(zmodemFile);
             return;
         }else{
+            g_progress_win->updateFile(zmodemFile);
             asynHandleEvent(SEND_DATA_EVT);
             return;
         }
@@ -628,6 +643,8 @@ void OscSession::handleFileInfo(const nd::OscPkg* pkg)
     zmodemFile->setFileId(fileinfo->id());
     zmodemFileMapM[fileinfo->id()] = zmodemFile;
 
+    g_progress_win->addFile(zmodemFile);
+
     uint32_t existCrc = 0;
     uint64_t len = zmodemFile->getExistLen(existCrc);
 
@@ -670,6 +687,8 @@ void OscSession::handleFileInitPos(const nd::OscPkg* pkg)
     zmodemFile->setWritePos(file_init_pos->offset());
     LOG_SE_INFO("[handleFileInitPos]id:" << file_init_pos->id()
             << ", pos:" << file_init_pos->offset());
+
+    g_progress_win->updateFile(zmodemFile);
 }
 
 //-----------------------------------------------------------------------------
@@ -719,6 +738,8 @@ void OscSession::handleFileContent(const nd::OscPkg* pkg)
             << ", crc32:0x" << std::hex << pkg_crc32 << std::dec
             << ", file:" << zmodemFile->getFilename());
 
+    g_progress_win->updateFile(zmodemFile);
+
 }
 
 //-----------------------------------------------------------------------------
@@ -753,6 +774,8 @@ void OscSession::handleFileComplete(const nd::OscPkg* pkg)
             << ", file:" << zmodemFile->getFilename());
 
     sendFileCompleteAck(file_complete->id());
+
+    g_progress_win->updateFileDone(zmodemFile);
 
     zmodemFileMapM.erase(it);
     delete zmodemFile;

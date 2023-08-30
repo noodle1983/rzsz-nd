@@ -8,6 +8,7 @@
 #include "Singleton.hpp"
 #include "CppProcessor.h"
 #include "KfifoBuffer.h"
+#include "ProgressWin.h"
 #include "Log.h"
 
 #include <unistd.h>
@@ -50,6 +51,7 @@ namespace nd
             //if (!FD_ISSET(STDIN_FILENO, &fds)){return 0;}
 
             int readed = ::read(STDIN_FILENO, buf, len);
+            g_progress_win->updateRecvBytes(readed);
             return readed;
         }
 

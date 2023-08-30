@@ -8,6 +8,7 @@
 #include "RfSession.h"
 #include "Processor.h"
 #include "Options.h"
+#include "ProgressWin.h"
 
 #include <vector>
 #include <fstream>
@@ -38,6 +39,8 @@ void parseOption(int argc, char const *argv[]){
 int main(int argc, char const *argv[])
 {
     g_file_logger->setExePrefix("");
+    g_options->setExeName("rf");
+    g_options->setIsDownload(false);
     parseOption(argc, argv);
     setTtyRawMode();
 
@@ -45,5 +48,6 @@ int main(int argc, char const *argv[])
     session->startInputTimer();
     g_processor->run();
 
+    g_progress_win->printReport();
     return 0;
 }

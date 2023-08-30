@@ -8,6 +8,7 @@
 #include "SfSession.h"
 #include "Processor.h"
 #include "Options.h"
+#include "ProgressWin.h"
 
 #include <vector>
 #include <fstream>
@@ -38,6 +39,8 @@ void parseOption(int argc, char const *argv[]){
 int main(int argc, char const *argv[])
 {
     g_file_logger->setExePrefix("");
+    g_options->setExeName("sf");
+    g_options->setIsDownload(true);
     parseOption(argc, argv);
     setTtyRawMode();
 
@@ -46,5 +49,6 @@ int main(int argc, char const *argv[])
     session->sf(g_options->filesM);
     g_processor->run();
 
+    g_progress_win->printReport();
     return 0;
 }

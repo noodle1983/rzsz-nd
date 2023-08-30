@@ -4,6 +4,11 @@ PROJBASE=$(CURDIR)
 #                Target                 #
 #########################################
 SUBDIR= fsm zmodem io osc base64 lz \
+		ftxui/ \
+		ftxui/src/ftxui/screen/ \
+		ftxui/src/ftxui/dom/ \
+		ftxui/src/ftxui/component/ \
+
 
 #########################################
 #      header and lib dependancy        #
@@ -16,6 +21,9 @@ INC_DIR= -I. \
      -I$(PROJBASE)/idl \
      -I$(PROJBASE)/base64 \
      -I$(PROJBASE)/lz \
+     -I$(PROJBASE)/ftxui/ \
+     -I$(PROJBASE)/ftxui/include \
+     -I$(PROJBASE)/ftxui/src \
 
 STATIC_LIB= \
 

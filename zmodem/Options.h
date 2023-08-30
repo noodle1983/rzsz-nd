@@ -52,6 +52,8 @@ public:
     const std::string& getServerWorkingDir(){return serverWorkingDirM.getValue();}
     bool shouldLogTestData(){return logDataM.getValue();}
     bool isInTmux(){return isInTmuxM;}
+    const std::string& getExeName(){return exeNameM;}
+    void setExeName(const std::string& exeName){exeNameM = exeName;}
     const std::string& getPresetRzFiles(){return presetRzFilesM.getValue();}
     void addCommonOptions(TCLAP::CmdLine& cmd){
         cmd.add(debugArgM);
@@ -62,6 +64,8 @@ public:
     }
 
     void addFiles(TCLAP::UnlabeledMultiArg<std::string>& optionsFiles);
+    void setIsDownload(bool isDownload){isDownloadM = isDownload;}
+    bool isDownload(){ return isDownloadM;}
 
 private:
     void checkEnv();
@@ -74,6 +78,10 @@ public:
     TCLAP::ValueArg<std::string> serverWorkingDirM;
     TCLAP::SwitchArg logDataM;
     bool isInTmuxM;
+
+    std::string exeNameM;
+    bool isDownloadM;
+
 
     // sz files
     std::vector<ZmodemFile*> filesM;

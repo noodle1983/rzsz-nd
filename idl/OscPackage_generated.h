@@ -179,14 +179,20 @@ inline ::flatbuffers::Offset<InitReq> CreateInitReq(
 struct InitRsp FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef InitRspBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_VERSION = 4
+    VT_VERSION = 4,
+    VT_WORKING_DIR = 6
   };
   uint32_t version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
   }
+  const ::flatbuffers::String *working_dir() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_WORKING_DIR);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
+           VerifyOffset(verifier, VT_WORKING_DIR) &&
+           verifier.VerifyString(working_dir()) &&
            verifier.EndTable();
   }
 };
@@ -197,6 +203,9 @@ struct InitRspBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_version(uint32_t version) {
     fbb_.AddElement<uint32_t>(InitRsp::VT_VERSION, version, 0);
+  }
+  void add_working_dir(::flatbuffers::Offset<::flatbuffers::String> working_dir) {
+    fbb_.AddOffset(InitRsp::VT_WORKING_DIR, working_dir);
   }
   explicit InitRspBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -211,10 +220,23 @@ struct InitRspBuilder {
 
 inline ::flatbuffers::Offset<InitRsp> CreateInitRsp(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t version = 0) {
+    uint32_t version = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> working_dir = 0) {
   InitRspBuilder builder_(_fbb);
+  builder_.add_working_dir(working_dir);
   builder_.add_version(version);
   return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<InitRsp> CreateInitRspDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t version = 0,
+    const char *working_dir = nullptr) {
+  auto working_dir__ = working_dir ? _fbb.CreateString(working_dir) : 0;
+  return nd::CreateInitRsp(
+      _fbb,
+      version,
+      working_dir__);
 }
 
 struct FileInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

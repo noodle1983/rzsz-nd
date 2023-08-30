@@ -28,7 +28,7 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 DEBUG_LDFLAGS= -fsanitize=address -fno-omit-frame-pointer
-RELEASE_LDFLAGS=
+RELEASE_LDFLAGS= -static-libstdc++ -static-libgcc
 LDFLAGS= $(SHARED_LIB_DIR) $(SHARED_LIB) $(STATIC_LIB)
 
 DEBUG_SUFFIX=_d

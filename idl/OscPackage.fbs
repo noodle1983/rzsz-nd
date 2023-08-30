@@ -30,6 +30,7 @@ table InitReq {
 
 table InitRsp {
     version : uint32;
+    working_dir : string;
 }
 
 table FileInfo {
