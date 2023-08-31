@@ -28,8 +28,8 @@ namespace nd
             TIMEOUT_EVT   = -3,
             NEXT_EVT      = -4,
             OK_EVT        = -5, 
-            FAILED_EVT    = -6
-
+            FAILED_EVT    = -6,
+            RESET_EVT     = -7
         };
 
         Session(
@@ -77,7 +77,10 @@ namespace nd
         }
 
         bool isToDelete(){return isDestroyedM;}
-        void setDelete(){isDestroyedM = true;}
+        void setDelete(){isDestroyedM = true; globalSessionM = nullptr;}
+
+        static void setGlobalSession(Session* session){globalSessionM = session;}
+        static Session* getGlobalSession(){return globalSessionM;}
 
     protected:
         bool isInitializedM;
@@ -91,6 +94,7 @@ namespace nd
         min_heap_item_t* fsmTimerM;
         uint64_t sessionIdM;
 
+        static Session* globalSessionM;
     };
 }
 

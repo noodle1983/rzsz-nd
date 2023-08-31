@@ -12,6 +12,8 @@
 
 using namespace nd;
 
+Session* Session::globalSessionM = nullptr;
+
 typedef std::pair<Session*, unsigned char> TimerPair;
 //-----------------------------------------------------------------------------
 

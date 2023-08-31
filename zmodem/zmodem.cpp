@@ -8,11 +8,14 @@
 #include "zmodem.h"
 #include "crctab.h"
 #include "Log.h"
+#include "Session.h"
+#include "ProgressWin.h"
 
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/select.h>
+
 
 int hex2int(char hex)
 {
@@ -149,6 +152,11 @@ const char* getTypeStr(unsigned char type)
 void sigHandler(int n)
 {
     resetTty();
+    auto session = nd::Session::getGlobalSession();
+    if (session != nullptr){
+        session->asynHandleEvent(nd::Session::RESET_EVT);
+        LOG_INFO("[sigHanler]" << n);
+    }
 }
 
 struct termios oldtty, tty;

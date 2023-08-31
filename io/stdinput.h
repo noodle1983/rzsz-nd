@@ -51,7 +51,9 @@ namespace nd
             //if (!FD_ISSET(STDIN_FILENO, &fds)){return 0;}
 
             int readed = ::read(STDIN_FILENO, buf, len);
-            g_progress_win->updateRecvBytes(readed);
+            if (readed > 0){
+                g_progress_win->updateRecvBytes(readed);
+            }
             return readed;
         }
 

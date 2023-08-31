@@ -172,7 +172,7 @@ void OscSession::parsePkg()
         else if (pkg->pkg_type() == nd::PkgType_Bye){
             LOG_SE_INFO("[handleBye]");
             sendByeBye();
-            asynHandleEvent(DESTROY_EVT);
+            asynHandleEvent(RESET_EVT);
         }
         else if (pkg->pkg_type() == nd::PkgType_ByeBye){
             asynHandleEvent(RESET_EVT);
@@ -272,6 +272,7 @@ void OscSession::destroy()
     stopInputTimer();
 	asynHandleEvent(DESTROY_EVT);
 	setDelete();
+    g_processor->waitStop();
 }
 
 //-----------------------------------------------------------------------------
@@ -280,7 +281,6 @@ void OscSession::deleteSelf(nd::Session* session)
 {
     resetTty();
     delete session;
-    g_processor->waitStop();
 }
 
 //-----------------------------------------------------------------------------
@@ -804,6 +804,10 @@ void OscSession::sendFileCompleteAck(uint32_t fileId)
 
 void OscSession::sendBye()
 {
+    if (isToDelete()){
+        asynHandleEvent(RESET_EVT);
+        return;
+    }
     flatbuffers::FlatBufferBuilder fbb;
     auto bye = nd::CreateBye(fbb);
     nd::OscPkgBuilder builder(fbb);

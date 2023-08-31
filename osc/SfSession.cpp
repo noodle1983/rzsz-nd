@@ -58,6 +58,7 @@ nd::FiniteStateMachine* SfSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(SEND_DATA_EVT,     CHANGE_STATE(SEND_DATA_STATE));
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(OscSession, parsePkg));
+        (*fsm) +=      FSM_EVENT(RESET_EVT,         CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(NEXT_EVT,          CHANGE_STATE(SEND_FILE_INFO_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
 
@@ -72,6 +73,7 @@ nd::FiniteStateMachine* SfSession::getZmodemFsm()
 
         (*fsm) += FSM_STATE(DESTROY_STATE);
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(OscSession, destroy));
+        (*fsm) +=      FSM_EVENT(RESET_EVT,         IGNORE_EVT());
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       &OscSession::deleteSelf);
 
         g_sz_fsm.reset(fsm);

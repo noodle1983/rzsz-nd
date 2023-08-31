@@ -996,6 +996,7 @@ void ZmodemSession::destroy()
 {
 	asynHandleEvent(DESTROY_EVT);
 	setDelete();
+    g_processor->waitStop();
 }
 
 //-----------------------------------------------------------------------------
@@ -1004,7 +1005,6 @@ void ZmodemSession::deleteSelf(nd::Session* session)
 {
     resetTty();
     delete session;
-    g_processor->waitStop();
 }
 
 //-----------------------------------------------------------------------------

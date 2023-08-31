@@ -46,7 +46,6 @@ public:
 	enum MyEvent
 	{
 		NETWORK_INPUT_EVT = 0,
-		RESET_EVT,
 		SEND_DATA_EVT,
 		SEND_DATA_LATER_EVT,
 		DESTROY_EVT,

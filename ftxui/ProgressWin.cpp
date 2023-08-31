@@ -137,7 +137,9 @@ void ProgressWin::print(bool end)
     prevPrintTimeM = now;
 
     screenM.RunOnce(componentM);
-    std::cout << "\r\n" << std::flush;
+    if (end){
+        std::cout << "\r\n" << std::flush;
+    }
 }
 
 //-----------------------------------------------------------------------------
