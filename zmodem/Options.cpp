@@ -7,6 +7,7 @@
  **/
 #include "Options.h"
 #include "ZmodemFile.h"
+#include "Log.h"
 #include <iostream>
 #include <filesystem>
 #include <map>
@@ -48,6 +49,8 @@ void checkAddFile(const string& abPath, const string& rePath, vector<ZmodemFile*
 
     ZmodemFile* file  = new ZmodemFile(abPath, rePath, fileStat.st_size, fileStat.st_mtim.tv_sec);
     files.push_back(file);
+    LOG_DEBUG("[checkAddFile]id:" << file->getFileId()
+            << ", rePath:" << file->getFilename());
 }
 
 void Options::addFiles(TCLAP::UnlabeledMultiArg<string>& optionsFiles)
@@ -55,26 +58,27 @@ void Options::addFiles(TCLAP::UnlabeledMultiArg<string>& optionsFiles)
     // 1. the relative path
     auto files = optionsFiles.getValue();
     for(auto f : files){
-        fs::path fsPath = fs::absolute(getServerWorkingDir() + "/" + f);
+        fs::path fsPath = fs::absolute(getServerWorkingDir() + "/" + f).lexically_normal();
         if(!fs::exists(fsPath)){
             cerr << "file does not exist:" << f << endl;
             exit(-1);
         }
 
         if(fs::is_directory(fsPath)){
-            string base = fsPath.parent_path();
+            auto base = (fsPath / "..").lexically_normal();
             for(auto& p: fs::recursive_directory_iterator(fsPath)){
                 auto childFsPath = p.path();
                 if (!fs::is_directory(childFsPath)){
                     string abPath = childFsPath;
-                    string rePath = abPath.substr(base.length() + 1);
+                    string rePath = childFsPath.lexically_relative(base);
                     checkAddFile(abPath, rePath, filesM);
                 }
                 else{
                     if (fs::is_empty(childFsPath)){
                         string abPath = childFsPath;
-                        string rePath = abPath.substr(base.length() + 1);
+                        string rePath = childFsPath.lexically_relative(base);
                         emptyDirsM.push_back(rePath);
+                        LOG_INFO("[checkAddFile]empty dir:" << rePath);
                     }
                 }
             }

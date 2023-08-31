@@ -32,7 +32,7 @@ static std::string formatSpeed(uint64_t bytes)
 //-----------------------------------------------------------------------------
 
 ProgressWin::ProgressWin()
-    : screenM(ftxui::ScreenInteractive::FitComponent())
+    : screenM(ftxui::ScreenInteractive::TerminalOutput())
     , sentBytesM(0)
     , recvBytesM(0)
     , prevStatTimeM(std::chrono::system_clock::now())
@@ -45,7 +45,7 @@ ProgressWin::ProgressWin()
     , showReport(false)
 {
     using namespace ftxui;
-    auto component = Renderer([&] {
+    componentM = Renderer([&] {
         auto header = g_options->getExeName() + ": local[" + g_options->getClientWorkingDir() + "]"
             + (g_options->isDownload()? " <- " : " -> ")
             + "remote[" + g_options->getServerWorkingDir() + "]";
@@ -74,7 +74,10 @@ ProgressWin::ProgressWin()
         return vbox(elements);
     });
 
-    loopM = new ftxui::Loop(&screenM, component);
+    auto cursor = screenM.cursor();
+    cursor.shape = ftxui::Screen::Cursor::Shape::Hidden;
+    screenM.SetCursor(cursor);
+
 }
 
 //-----------------------------------------------------------------------------
@@ -128,14 +131,13 @@ ftxui::Elements& ProgressWin::addFileElements(ftxui::Elements& elements)
 
 void ProgressWin::print(bool end)
 {
-    if (loopM == nullptr) { return; }
-
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     const std::chrono::duration<float> diff = (now - prevPrintTimeM);
     if (!end && (diff.count() < 0.2f)){ return; }
     prevPrintTimeM = now;
 
-    loopM->RunOnce();
+    screenM.RunOnce(componentM);
+    std::cout << "\r\n" << std::flush;
 }
 
 //-----------------------------------------------------------------------------
@@ -221,3 +223,13 @@ void ProgressWin::stat(bool force)
 
 //-----------------------------------------------------------------------------
 
+void ProgressWin::printReport()
+{
+    showReport = true;
+    stat(true);
+    print(true);
+    //screenM = ftxui::ScreenInteractive::TerminalOutput();
+    //screenM.RunOnce(componentM);
+}
+
+//-----------------------------------------------------------------------------

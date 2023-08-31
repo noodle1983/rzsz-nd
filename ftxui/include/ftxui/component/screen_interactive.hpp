@@ -57,6 +57,7 @@ class ScreenInteractive : public Screen {
   // temporarily uninstalled.
   Closure WithRestoredIO(Closure);
 
+  void RunOnce(Component component);
  private:
   void ExitNow();
 
@@ -67,7 +68,6 @@ class ScreenInteractive : public Screen {
   void PostMain();
 
   bool HasQuitted();
-  void RunOnce(Component component);
   void RunOnceBlocking(Component component);
 
   void HandleTask(Component component, Task& task);

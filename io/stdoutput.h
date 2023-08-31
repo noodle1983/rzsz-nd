@@ -27,6 +27,7 @@ namespace nd
         }
 
         virtual ~StdOutput(){
+            std::cout << "\r\n" << std::flush;
         }
 
         void sendData(const char* buffer, const int len)

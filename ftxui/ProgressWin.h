@@ -34,16 +34,12 @@ class ProgressWin
 public:
     ProgressWin();
 
-    virtual ~ProgressWin(){
-        if (loopM != nullptr){
-            delete loopM;
-            loopM = nullptr;
-        }
-    }
+    virtual ~ProgressWin(){ }
 
     ftxui::Elements& addFileElements(ftxui::Elements& elements);
 
     void print(bool end = false);
+    void printReport();
 
     void addFile(ZmodemFile* zfile);
     void updateFile(ZmodemFile* zfile);
@@ -57,16 +53,10 @@ public:
 
     void stat(bool force = false);
 
-    void printReport()
-    {
-        showReport = true;
-        stat(true);
-        print(true);
-    }
 
 private:
     ftxui::ScreenInteractive screenM;
-    ftxui::Loop* loopM;
+    ftxui::Component componentM;
 
     std::string clientWorkingDirM;
     std::string serverWorkingDirM;

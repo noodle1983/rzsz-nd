@@ -31,6 +31,8 @@
 #include "ftxui/dom/requirement.hpp"                  // for Requirement
 #include "ftxui/screen/terminal.hpp"                  // for Dimensions, Size
 
+#include "Log.h"
+
 #if defined(_WIN32)
 #define DEFINE_CONSOLEV2_PROPERTIES
 #define WIN32_LEAN_AND_MEAN
@@ -77,73 +79,75 @@ constexpr int timeout_milliseconds = 20;
     timeout_milliseconds * 1000;
 #if defined(_WIN32)
 
-void EventListener(std::atomic<bool>* quit, Sender<Task> out) {
-  auto console = GetStdHandle(STD_INPUT_HANDLE);
-  auto parser = TerminalInputParser(out->Clone());
-  while (!*quit) {
-    // Throttle ReadConsoleInput by waiting 250ms, this wait function will
-    // return if there is input in the console.
-    auto wait_result = WaitForSingleObject(console, timeout_milliseconds);
-    if (wait_result == WAIT_TIMEOUT) {
-      parser.Timeout(timeout_milliseconds);
-      continue;
-    }
-
-    DWORD number_of_events = 0;
-    if (!GetNumberOfConsoleInputEvents(console, &number_of_events))
-      continue;
-    if (number_of_events <= 0)
-      continue;
-
-    std::vector<INPUT_RECORD> records{number_of_events};
-    DWORD number_of_events_read = 0;
-    ReadConsoleInput(console, records.data(), (DWORD)records.size(),
-                     &number_of_events_read);
-    records.resize(number_of_events_read);
-
-    for (const auto& r : records) {
-      switch (r.EventType) {
-        case KEY_EVENT: {
-          auto key_event = r.Event.KeyEvent;
-          // ignore UP key events
-          if (key_event.bKeyDown == FALSE)
-            continue;
-          std::wstring wstring;
-          wstring += key_event.uChar.UnicodeChar;
-          for (auto it : to_string(wstring)) {
-            parser.Add(it);
-          }
-        } break;
-        case WINDOW_BUFFER_SIZE_EVENT:
-          out->Send(Event::Special({0}));
-          break;
-        case MENU_EVENT:
-        case FOCUS_EVENT:
-        case MOUSE_EVENT:
-          // TODO(mauve): Implement later.
-          break;
-      }
-    }
-  }
-}
+//noodle
+//void EventListener(std::atomic<bool>* quit, Sender<Task> out) {
+//  auto console = GetStdHandle(STD_INPUT_HANDLE);
+//  auto parser = TerminalInputParser(out->Clone());
+//  while (!*quit) {
+//    // Throttle ReadConsoleInput by waiting 250ms, this wait function will
+//    // return if there is input in the console.
+//    auto wait_result = WaitForSingleObject(console, timeout_milliseconds);
+//    if (wait_result == WAIT_TIMEOUT) {
+//      parser.Timeout(timeout_milliseconds);
+//      continue;
+//    }
+//
+//    DWORD number_of_events = 0;
+//    if (!GetNumberOfConsoleInputEvents(console, &number_of_events))
+//      continue;
+//    if (number_of_events <= 0)
+//      continue;
+//
+//    std::vector<INPUT_RECORD> records{number_of_events};
+//    DWORD number_of_events_read = 0;
+//    ReadConsoleInput(console, records.data(), (DWORD)records.size(),
+//                     &number_of_events_read);
+//    records.resize(number_of_events_read);
+//
+//    for (const auto& r : records) {
+//      switch (r.EventType) {
+//        case KEY_EVENT: {
+//          auto key_event = r.Event.KeyEvent;
+//          // ignore UP key events
+//          if (key_event.bKeyDown == FALSE)
+//            continue;
+//          std::wstring wstring;
+//          wstring += key_event.uChar.UnicodeChar;
+//          for (auto it : to_string(wstring)) {
+//            parser.Add(it);
+//          }
+//        } break;
+//        case WINDOW_BUFFER_SIZE_EVENT:
+//          out->Send(Event::Special({0}));
+//          break;
+//        case MENU_EVENT:
+//        case FOCUS_EVENT:
+//        case MOUSE_EVENT:
+//          // TODO(mauve): Implement later.
+//          break;
+//      }
+//    }
+//  }
+//}
 
 #elif defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 
+//noodle
 // Read char from the terminal.
-void EventListener(std::atomic<bool>* quit, Sender<Task> out) {
-  (void)timeout_microseconds;
-  auto parser = TerminalInputParser(std::move(out));
-
-  char c;
-  while (!*quit) {
-    while (read(STDIN_FILENO, &c, 1), c)
-      parser.Add(c);
-
-    emscripten_sleep(1);
-    parser.Timeout(1);
-  }
-}
+//void EventListener(std::atomic<bool>* quit, Sender<Task> out) {
+//  (void)timeout_microseconds;
+//  auto parser = TerminalInputParser(std::move(out));
+//
+//  char c;
+//  while (!*quit) {
+//    while (read(STDIN_FILENO, &c, 1), c)
+//      parser.Add(c);
+//
+//    emscripten_sleep(1);
+//    parser.Timeout(1);
+//  }
+//}
 
 extern "C" {
 EMSCRIPTEN_KEEPALIVE
@@ -158,33 +162,34 @@ void ftxui_on_resize(int columns, int rows) {
 
 #else  // POSIX (Linux & Mac)
 
-int CheckStdinReady(int usec_timeout) {
-  timeval tv = {0, usec_timeout};
-  fd_set fds;
-  FD_ZERO(&fds);                                          // NOLINT
-  FD_SET(STDIN_FILENO, &fds);                             // NOLINT
-  select(STDIN_FILENO + 1, &fds, nullptr, nullptr, &tv);  // NOLINT
-  return FD_ISSET(STDIN_FILENO, &fds);                    // NOLINT
-}
-
+// noodle
+//int CheckStdinReady(int usec_timeout) {
+//  timeval tv = {0, usec_timeout};
+//  fd_set fds;
+//  FD_ZERO(&fds);                                          // NOLINT
+//  FD_SET(STDIN_FILENO, &fds);                             // NOLINT
+//  select(STDIN_FILENO + 1, &fds, nullptr, nullptr, &tv);  // NOLINT
+//  return FD_ISSET(STDIN_FILENO, &fds);                    // NOLINT
+//}
+//
 // Read char from the terminal.
-void EventListener(std::atomic<bool>* quit, Sender<Task> out) {
-  auto parser = TerminalInputParser(std::move(out));
-
-  while (!*quit) {
-    if (!CheckStdinReady(timeout_microseconds)) {
-      parser.Timeout(timeout_milliseconds);
-      continue;
-    }
-
-    const size_t buffer_size = 100;
-    std::array<char, buffer_size> buffer;                        // NOLINT;
-    size_t l = read(fileno(stdin), buffer.data(), buffer_size);  // NOLINT
-    for (size_t i = 0; i < l; ++i) {
-      parser.Add(buffer[i]);  // NOLINT
-    }
-  }
-}
+//void EventListener(std::atomic<bool>* quit, Sender<Task> out) {
+//  auto parser = TerminalInputParser(std::move(out));
+//
+//  while (!*quit) {
+//    if (!CheckStdinReady(timeout_microseconds)) {
+//      parser.Timeout(timeout_milliseconds);
+//      continue;
+//    }
+//
+//    const size_t buffer_size = 100;
+//    std::array<char, buffer_size> buffer;                        // NOLINT;
+//    size_t l = read(fileno(stdin), buffer.data(), buffer_size);  // NOLINT
+//    for (size_t i = 0; i < l; ++i) {
+//      parser.Add(buffer[i]);  // NOLINT
+//    }
+//  }
+//}
 #endif
 
 std::stack<Closure> on_exit_functions;  // NOLINT
@@ -202,31 +207,31 @@ std::atomic<int> g_signal_resize_count = 0;  // NOLINT
 #endif
 
 // Async signal safe function
-void RecordSignal(int signal) {
-  switch (signal) {
-    case SIGABRT:
-    case SIGFPE:
-    case SIGILL:
-    case SIGINT:
-    case SIGSEGV:
-    case SIGTERM:
-      g_signal_exit_count++;
-      break;
-
-#if !defined(_WIN32)
-    case SIGTSTP:
-      g_signal_stop_count++;
-      break;
-
-    case SIGWINCH:
-      g_signal_resize_count++;
-      break;
-#endif
-
-    default:
-      break;
-  }
-}
+//void RecordSignal(int signal) {
+//  switch (signal) {
+//    case SIGABRT:
+//    case SIGFPE:
+//    case SIGILL:
+//    case SIGINT:
+//    case SIGSEGV:
+//    case SIGTERM:
+//      g_signal_exit_count++;
+//      break;
+//
+//#if !defined(_WIN32)
+//    case SIGTSTP:
+//      g_signal_stop_count++;
+//      break;
+//
+//    case SIGWINCH:
+//      g_signal_resize_count++;
+//      break;
+//#endif
+//
+//    default:
+//      break;
+//  }
+//}
 
 void ExecuteSignalHandlers() {
   int signal_exit_count = g_signal_exit_count.exchange(0);
@@ -247,11 +252,12 @@ void ExecuteSignalHandlers() {
 #endif
 }
 
-void InstallSignalHandler(int sig) {
-  auto old_signal_handler = std::signal(sig, RecordSignal);
-  on_exit_functions.push(
-      [=] { std::ignore = std::signal(sig, old_signal_handler); });
-}
+// noodle
+//void InstallSignalHandler(int sig) {
+//  auto old_signal_handler = std::signal(sig, RecordSignal);
+//  on_exit_functions.push(
+//      [=] { std::ignore = std::signal(sig, old_signal_handler); });
+//}
 
 const std::string CSI = "\x1b[";  // NOLINT
 
@@ -279,33 +285,34 @@ enum class DSRMode {
   kCursor = 6,
 };
 
-std::string Serialize(const std::vector<DECMode>& parameters) {
-  bool first = true;
-  std::string out;
-  for (const DECMode parameter : parameters) {
-    if (!first) {
-      out += ";";
-    }
-    out += std::to_string(int(parameter));
-    first = false;
-  }
-  return out;
-}
-
+//noodle
+//std::string Serialize(const std::vector<DECMode>& parameters) {
+//  bool first = true;
+//  std::string out;
+//  for (const DECMode parameter : parameters) {
+//    if (!first) {
+//      out += ";";
+//    }
+//    out += std::to_string(int(parameter));
+//    first = false;
+//  }
+//  return out;
+//}
+//
 // DEC Private Mode Set (DECSET)
-std::string Set(const std::vector<DECMode>& parameters) {
-  return CSI + "?" + Serialize(parameters) + "h";
-}
-
-// DEC Private Mode Reset (DECRST)
-std::string Reset(const std::vector<DECMode>& parameters) {
-  return CSI + "?" + Serialize(parameters) + "l";
-}
-
+//std::string Set(const std::vector<DECMode>& parameters) {
+//  return CSI + "?" + Serialize(parameters) + "h";
+//}
+//
+//// DEC Private Mode Reset (DECRST)
+//std::string Reset(const std::vector<DECMode>& parameters) {
+//  return CSI + "?" + Serialize(parameters) + "l";
+//}
+//
 // Device Status Report (DSR)
-std::string DeviceStatusReport(DSRMode ps) {
-  return CSI + std::to_string(int(ps)) + "n";
-}
+//std::string DeviceStatusReport(DSRMode ps) {
+//  return CSI + std::to_string(int(ps)) + "n";
+//}
 
 class CapturedMouseImpl : public CapturedMouseInterface {
  public:
@@ -321,14 +328,15 @@ class CapturedMouseImpl : public CapturedMouseInterface {
   std::function<void(void)> callback_;
 };
 
-void AnimationListener(std::atomic<bool>* quit, Sender<Task> out) {
-  // Animation at around 60fps.
-  const auto time_delta = std::chrono::milliseconds(15);
-  while (!*quit) {
-    out->Send(AnimationTask());
-    std::this_thread::sleep_for(time_delta);
-  }
-}
+//noodle
+//void AnimationListener(std::atomic<bool>* quit, Sender<Task> out) {
+//  // Animation at around 60fps.
+//  const auto time_delta = std::chrono::milliseconds(15);
+//  while (!*quit) {
+//    out->Send(AnimationTask());
+//    std::this_thread::sleep_for(time_delta);
+//  }
+//}
 
 }  // namespace
 
@@ -744,7 +752,7 @@ void ScreenInteractive::Draw(Component component) {
       dimy = dimy_;
       break;
     case Dimension::TerminalOutput:
-      dimx = terminal.dimx;
+      dimx = std::min(document->requirement().min_x, terminal.dimx);
       dimy = document->requirement().min_y;
       break;
     case Dimension::Fullscreen:
@@ -773,26 +781,27 @@ void ScreenInteractive::Draw(Component component) {
   // Periodically request the terminal emulator the frame position relative to
   // the screen. This is useful for converting mouse position reported in
   // screen's coordinates to frame's coordinates.
-#if defined(FTXUI_MICROSOFT_TERMINAL_FALLBACK)
-  // Microsoft's terminal suffers from a [bug]. When reporting the cursor
-  // position, several output sequences are mixed together into garbage.
-  // This causes FTXUI user to see some "1;1;R" sequences into the Input
-  // component. See [issue]. Solution is to request cursor position less
-  // often. [bug]: https://github.com/microsoft/terminal/pull/7583 [issue]:
-  // https://github.com/ArthurSonzogni/FTXUI/issues/136
-  static int i = -3;
-  ++i;
-  if (!use_alternative_screen_ && (i % 150 == 0)) {  // NOLINT
-    std::cout << DeviceStatusReport(DSRMode::kCursor);
-  }
-#else
-  static int i = -3;
-  ++i;
-  if (!use_alternative_screen_ &&
-      (previous_frame_resized_ || i % 40 == 0)) {  // NOLINT
-    std::cout << DeviceStatusReport(DSRMode::kCursor);
-  }
-#endif
+//noodle
+//#if defined(FTXUI_MICROSOFT_TERMINAL_FALLBACK)
+//  // Microsoft's terminal suffers from a [bug]. When reporting the cursor
+//  // position, several output sequences are mixed together into garbage.
+//  // This causes FTXUI user to see some "1;1;R" sequences into the Input
+//  // component. See [issue]. Solution is to request cursor position less
+//  // often. [bug]: https://github.com/microsoft/terminal/pull/7583 [issue]:
+//  // https://github.com/ArthurSonzogni/FTXUI/issues/136
+//  static int i = -3;
+//  ++i;
+//  if (!use_alternative_screen_ && (i % 150 == 0)) {  // NOLINT
+//    std::cout << DeviceStatusReport(DSRMode::kCursor);
+//  }
+//#else
+//  static int i = -3;
+//  ++i;
+//  if (!use_alternative_screen_ &&
+//      (previous_frame_resized_ || i % 40 == 0)) {  // NOLINT
+//    std::cout << DeviceStatusReport(DSRMode::kCursor);
+//  }
+//#endif
   previous_frame_resized_ = resized;
 
   Render(*this, document);
@@ -817,6 +826,7 @@ void ScreenInteractive::Draw(Component component) {
   }
 
   std::cout << ToString() << set_cursor_position;
+  LOG_INFO("set cur:" << set_cursor_position)
   Flush();
   Clear();
   frame_valid_ = true;
