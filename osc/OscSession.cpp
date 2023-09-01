@@ -222,7 +222,7 @@ void OscSession::onInputTimerout(void *arg)
 void OscSession::startInputTimer()
 {
     if (inputTimerM){stopInputTimer();}
-    inputTimerM = g_processor->addLocalTimer(10, onInputTimerout, this);
+    inputTimerM = g_processor->addLocalTimer(1, onInputTimerout, this);
 }
 
 //-----------------------------------------------------------------------------
