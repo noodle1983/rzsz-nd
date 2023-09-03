@@ -231,6 +231,7 @@ void ProgressWin::printReport()
         for(auto& msg: msgsM){
             std::cout << msg << "\r\n";
         }
+        std::cout << std::flush;
         return;
     }
     showReport = true;
