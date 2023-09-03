@@ -227,6 +227,12 @@ void ProgressWin::stat(bool force)
 
 void ProgressWin::printReport()
 {
+    if(filesM.empty()){
+        for(auto& msg: msgsM){
+            std::cout << msg << "\r\n";
+        }
+        return;
+    }
     showReport = true;
     stat(true);
     print(true);
