@@ -240,6 +240,7 @@ int OscSession::processNetworkInput(const char* const str, const int len)
     if (len > 0){
         memcpy(bufferM + bufferLenM, str, len);
         bufferLenM += len;
+        resetTimer();
     }
 	asynHandleEvent(NETWORK_INPUT_EVT);
 	return 0;
