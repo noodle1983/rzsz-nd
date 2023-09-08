@@ -845,6 +845,8 @@ void OscSession::sendByeBye()
 
 void OscSession::unsupportNotice()
 {
+    resetTty();
+    LOG_SE_INFO("[unsupportNotice]");
     std::cout << "Notice: no response is detected for InitReq.\r\n"
         << "Please make sure you have putty-nd(>=7.20, https://sourceforge.net/projects/putty-nd ) installed.\r\n";
     if (g_options->isInTmux())
