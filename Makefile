@@ -8,6 +8,7 @@ SUBDIR= fsm zmodem io osc base64 lz \
 		ftxui/src/ftxui/screen/ \
 		ftxui/src/ftxui/dom/ \
 		ftxui/src/ftxui/component/ \
+		fmt/src/ \
 
 
 #########################################
@@ -24,6 +25,8 @@ INC_DIR= -I. \
      -I$(PROJBASE)/ftxui/ \
      -I$(PROJBASE)/ftxui/include \
      -I$(PROJBASE)/ftxui/src \
+     -I$(PROJBASE)/fmt/include \
+     -I$(PROJBASE)/fmt/src \
 
 STATIC_LIB= \
 

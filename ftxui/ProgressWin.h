@@ -20,6 +20,7 @@
 #include "Options.h"
 
 class ZmodemFile;
+struct min_heap_item_t;
 
 struct ProgressFileInfo{
     std::string fileM;
@@ -34,17 +35,20 @@ class ProgressWin
 public:
     ProgressWin();
 
-    virtual ~ProgressWin(){ }
+    virtual ~ProgressWin();
 
     ftxui::Elements& addFileElements(ftxui::Elements& elements);
 
+    static void onTimeoutPrint(void* p);
+    void timeoutPrint();
     void print(bool end = false);
     void printReport();
 
     void addFile(ZmodemFile* zfile);
     void updateFile(ZmodemFile* zfile);
     void updateFileDone(ZmodemFile* zfile);
-    void addMsg(const char* msg) { msgsM.push_back(msg); }
+    void addMsg(const char* msg) { msgM = msg; }
+    void clearMsg(const char* msg){ if (msgM == msg){msgM = "";}}
     void setClientWorkdingDir(const std::string& value){clientWorkingDirM = value;}
     void setServerWorkdingDir(const std::string& value){serverWorkingDirM = value;}
 
@@ -63,7 +67,7 @@ private:
 
     std::map<uint32_t, int> file2IndexMapsM;
     std::vector<ProgressFileInfo> filesM;
-    std::vector<std::string> msgsM;
+    std::string msgM;
 
     std::chrono::time_point<std::chrono::system_clock> prevPrintTimeM;
 
@@ -80,6 +84,7 @@ private:
     float maxSentSpeedM;
     float maxRecvSpeedM;
 
+    min_heap_item_t* printTimerM;
     bool showReport;
 };
 

@@ -6,6 +6,7 @@
  *    Public License (GPLv3).
  **/
 #include "Session.h"
+#include "ProgressWin.h"
 
 #include <utility>
 #include <Log.h>
@@ -170,6 +171,8 @@ void Session::handleTimeout()
 {
     fsmTimerM = NULL; // free by worker
     handleEvent(TIMEOUT_EVT);
+
+    g_progress_win->addMsg("Session Timeout!");
 }
 
 //-----------------------------------------------------------------------------

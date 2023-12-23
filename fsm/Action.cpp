@@ -8,6 +8,7 @@
 #include "Action.h"
 #include "Session.h"
 #include "State.h"
+#include "ProgressWin.h"
 
 #include <string>
 
@@ -113,3 +114,20 @@ void nd::deleteSession(
 
 //-----------------------------------------------------------------------------
 
+void nd::showProgress(
+        nd::Session* theSession,
+        const char* theMsg)
+{
+    g_progress_win->addMsg(theMsg);
+}
+
+//-----------------------------------------------------------------------------
+
+void nd::clearProgress(
+        nd::Session* theSession,
+        const char* theMsg)
+{
+    g_progress_win->clearMsg(theMsg);
+}
+
+//-----------------------------------------------------------------------------

@@ -41,7 +41,8 @@ nd::FiniteStateMachine* SfSession::getZmodemFsm()
 
         (*fsm) += FSM_STATE(SEND_FILE_INFO_STATE);
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(OscSession, sendFileInfo));
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
+        //(*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(10000));
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SHOW_GROGRESSS("calc-ing local file's crc..."));
         (*fsm) +=      FSM_EVENT(NEXT_EVT,          CHANGE_STATE(SEND_FILE_INFO_STATE));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(END_STATE));
         (*fsm) +=      FSM_EVENT(OK_EVT,            CHANGE_STATE(END_STATE));
@@ -50,6 +51,7 @@ nd::FiniteStateMachine* SfSession::getZmodemFsm()
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(OscSession, parsePkg));
         (*fsm) +=      FSM_EVENT(SEND_DATA_EVT,     CHANGE_STATE(SEND_DATA_STATE));
         (*fsm) +=      FSM_EVENT(EXIT_EVT,          CANCEL_TIMER());
+        (*fsm) +=      FSM_EVENT(EXIT_EVT,          CLEAR_GROGRESSS("calc-ing local file's crc..."));
 
         (*fsm) += FSM_STATE(SEND_DATA_STATE);
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(OscSession, sendFileContent));
@@ -64,7 +66,7 @@ nd::FiniteStateMachine* SfSession::getZmodemFsm()
 
         (*fsm) += FSM_STATE(END_STATE);	
         (*fsm) +=      FSM_EVENT(ENTRY_EVT,         SE_FUNC(OscSession, sendBye));
-        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(3000));
+        (*fsm) +=      FSM_EVENT(ENTRY_EVT,         NEW_TIMER(30000));
         (*fsm) +=      FSM_EVENT(TIMEOUT_EVT,       CHANGE_STATE(DESTROY_STATE));
         (*fsm) +=      FSM_EVENT(NETWORK_INPUT_EVT, SE_FUNC(OscSession, parsePkg));
         (*fsm) +=      FSM_EVENT(DESTROY_EVT,       CHANGE_STATE(DESTROY_STATE));

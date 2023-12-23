@@ -274,6 +274,7 @@ Except for extra permissions from Dong Lu(noodle1983@126.com), this software is 
 [base64](https://github.com/altera-opensource/linux-socfpga/blob/e36e7a90783f05a2f877c75d9f8e2725e87cb9f4/include/linux/base64.h#L13) | GPL-2.0
 [flatbuffers](https://github.com/google/flatbuffers) | Apache-2.0
 [lz4](https://github.com/lz4/lz4) | BSD 2-Clause license
+[{fmt}](https://github.com/fmtlib/fmt) | MIT License
 
 
 

@@ -18,6 +18,8 @@
 #define DELETE_SESSION()          (&nd::deleteSession)
 #define IGNORE_EVT()              (&nd::ignoreEvent)
 #define SE_FUNC(theType, theFunc) FSM_BIND(nd::wrapSessionFunction<theType>, _1, &theType::theFunc)
+#define SHOW_GROGRESSS(theMsg)    FSM_BIND(nd::showProgress,  _1, (theMsg))
+#define CLEAR_GROGRESSS(theMsg)   FSM_BIND(nd::clearProgress,  _1, (theMsg))
 
 namespace nd
 {
@@ -49,6 +51,15 @@ namespace nd
 
     void deleteSession(
             nd::Session* theSession);
+
+    void showProgress(
+            nd::Session* theSession,
+            const char* theMsg);
+
+    void clearProgress(
+            nd::Session* theSession,
+            const char* theMsg);
+
 
     template<typename SessionType>
     void wrapSessionFunction(

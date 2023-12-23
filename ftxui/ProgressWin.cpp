@@ -1,6 +1,9 @@
-#include "ProgressWin.h"
+#include <fmt/format.h>
+#include <fmt/chrono.h>
 
+#include "ProgressWin.h"
 #include "ZmodemFile.h"
+#include "Processor.h"
 
 static std::string format(const char* str, ...)
 {
@@ -42,6 +45,7 @@ ProgressWin::ProgressWin()
     , recvSpeedM(0)
     , maxSentSpeedM(0)
     , maxRecvSpeedM(0)
+    , printTimerM(nullptr)
     , showReport(false)
 {
     using namespace ftxui;
@@ -55,21 +59,19 @@ ProgressWin::ProgressWin()
             }),
         };
 
-        if (recvSpeedM > 0 || sentSpeedM > 0){
-            elements.emplace_back(hbox({
-                text("Speed:r:"),
-                text(formatSpeed(recvSpeedM)),
-                filler(),
-                text("s:"),
-                text(formatSpeed(sentSpeedM)),
-            }));
-        }
+        std::time_t t = std::time(nullptr);
+        elements.emplace_back(hbox({
+            text("Speed:r:"),
+            text(formatSpeed(recvSpeedM)),
+            text("    s:"),
+            text(formatSpeed(sentSpeedM)),
+            filler(),
+            text(fmt::format("    {:%H:%M:%S}", fmt::localtime(t))),
+        }));
 
         addFileElements(elements);
 
-        for(auto& msg: msgsM){
-            elements.push_back(text(msg));
-        }
+        elements.push_back(text(msgM));
 
         return vbox(elements);
     });
@@ -78,6 +80,14 @@ ProgressWin::ProgressWin()
     cursor.shape = ftxui::Screen::Cursor::Shape::Hidden;
     screenM.SetCursor(cursor);
 
+    printTimerM = g_processor->addLocalTimer(1000,  onTimeoutPrint, this);
+}
+
+//-----------------------------------------------------------------------------
+
+ProgressWin::~ProgressWin()
+{
+    g_processor->cancelLocalTimer(printTimerM);
 }
 
 //-----------------------------------------------------------------------------
@@ -99,26 +109,34 @@ ftxui::Elements& ProgressWin::addFileElements(ftxui::Elements& elements)
         separator(),
         text("Used/Left Time"),
         separator(),
-        text("Progress"),
+        text("Progress      "),
     }));
 
     for(int i = filesM.size() - 1; i >= 0 && (showReport || i >= (int)filesM.size() - 3); i--){
         auto& file = filesM[i];
         bool isComplete = file.curSizeM == file.fileSizeM;
-        std::chrono::duration<float> diff = (isComplete && file.endTimeM > file.beginTimeM)? (file.endTimeM - file.beginTimeM) : (now - file.beginTimeM);
-        float eta = 0;
+        using duration_type = std::chrono::duration<int64_t, std::deci>;
+        duration_type diff = std::chrono::duration_cast<duration_type>((isComplete && file.endTimeM > file.beginTimeM)
+            ? (file.endTimeM - file.beginTimeM) : (now - file.beginTimeM));
+        duration_type eta(0);
         if (speed > 0){
-            eta = (file.fileSizeM - file.curSizeM) / speed;
+            eta = std::chrono::duration_cast<duration_type>(
+                    std::chrono::milliseconds(int((file.fileSizeM - file.curSizeM) / speed * 1000)));
         }
         fileGrids.emplace_back(Elements({separator(), separator(), separator(), separator(), separator(), separator(), separator()}));
         fileGrids.emplace_back(Elements({
             text(file.fileM),
             separator(),
-            text(format("%ld/%ld", file.curSizeM, file.fileSizeM)),
+            text(file.curSizeM > 0 ? fmt::format(std::locale("en_US.UTF-8"), "{:L}/{:L}", file.curSizeM, file.fileSizeM)
+                    : fmt::format(std::locale("en_US.UTF-8"), "---/{:L}", file.fileSizeM)),
             separator(),
-            text(speed > 0 ? format("%.1fs/%.1fs", diff.count(), eta) : format("%.1fs/---", diff.count())),
+            text(speed > 0 ? fmt::format("{:%H:%M:%S}s/{:%H:%M:%S}s", diff, eta) 
+                    : fmt::format("{:%H:%M:%S}/---", diff)),
             separator(),
-            gauge(file.fileSizeM > 0 ? file.curSizeM * 1.0f / file.fileSizeM : 1),
+            hbox({
+              gauge(file.fileSizeM > 0 ? file.curSizeM * 1.0f / file.fileSizeM : 1),
+              text(format("%5.1f%%", file.fileSizeM > 0 ? file.curSizeM * 100.0f / file.fileSizeM : 100.0)),
+            }), 
         }));
 
     }
@@ -129,11 +147,25 @@ ftxui::Elements& ProgressWin::addFileElements(ftxui::Elements& elements)
 
 //-----------------------------------------------------------------------------
 
+void ProgressWin::onTimeoutPrint(void* p)
+{
+    ((ProgressWin*)(p))->timeoutPrint();
+}
+
+void ProgressWin::timeoutPrint()
+{
+    printTimerM = nullptr;
+    print();
+    printTimerM = g_processor->addLocalTimer(1000,  onTimeoutPrint, this);
+}
+
+//-----------------------------------------------------------------------------
+
 void ProgressWin::print(bool end)
 {
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     const std::chrono::duration<float> diff = (now - prevPrintTimeM);
-    if (!end && (diff.count() < 0.2f)){ return; }
+    if (!end && (diff.count() < 1)){ return; }
     prevPrintTimeM = now;
 
     screenM.RunOnce(componentM);
@@ -227,10 +259,9 @@ void ProgressWin::stat(bool force)
 
 void ProgressWin::printReport()
 {
+    g_processor->cancelLocalTimer(printTimerM);
     if(filesM.empty()){
-        for(auto& msg: msgsM){
-            std::cout << msg << "\r\n";
-        }
+        std::cout << msgM << "\r\n";
         std::cout << std::flush;
         return;
     }
