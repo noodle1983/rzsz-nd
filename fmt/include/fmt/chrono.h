@@ -779,6 +779,9 @@ FMT_CONSTEXPR const Char* parse_chrono_format(const Char* begin,
     case 'I':
       handler.on_12_hour(numeric_system::standard, pad);
       break;
+    case 'i':
+      handler.on_interval_time();
+      break;
     case 'M':
       handler.on_minute(numeric_system::standard, pad);
       break;
@@ -939,6 +942,7 @@ template <typename Derived> struct null_chrono_spec_handler {
   FMT_CONSTEXPR void on_day_of_month(numeric_system) { unsupported(); }
   FMT_CONSTEXPR void on_day_of_month_space(numeric_system) { unsupported(); }
   FMT_CONSTEXPR void on_24_hour(numeric_system) { unsupported(); }
+  FMT_CONSTEXPR void on_interval_time() { unsupported(); }
   FMT_CONSTEXPR void on_12_hour(numeric_system) { unsupported(); }
   FMT_CONSTEXPR void on_minute(numeric_system) { unsupported(); }
   FMT_CONSTEXPR void on_second(numeric_system) { unsupported(); }
@@ -982,6 +986,7 @@ struct tm_format_checker : null_chrono_spec_handler<tm_format_checker> {
   FMT_CONSTEXPR void on_day_of_month(numeric_system) {}
   FMT_CONSTEXPR void on_day_of_month_space(numeric_system) {}
   FMT_CONSTEXPR void on_24_hour(numeric_system, pad_type) {}
+  FMT_CONSTEXPR void on_interval_time() {}
   FMT_CONSTEXPR void on_12_hour(numeric_system, pad_type) {}
   FMT_CONSTEXPR void on_minute(numeric_system, pad_type) {}
   FMT_CONSTEXPR void on_second(numeric_system, pad_type) {}
@@ -1541,6 +1546,8 @@ class tm_writer {
     }
   }
 
+  void on_interval_time() {
+  }
   void on_24_hour(numeric_system ns, pad_type pad) {
     if (is_classic_ || ns == numeric_system::standard)
       return write2(tm_hour(), pad);
@@ -1624,6 +1631,7 @@ struct chrono_format_checker : null_chrono_spec_handler<chrono_format_checker> {
   FMT_CONSTEXPR void on_text(const Char*, const Char*) {}
   FMT_CONSTEXPR void on_day_of_year() {}
   FMT_CONSTEXPR void on_24_hour(numeric_system, pad_type) {}
+  FMT_CONSTEXPR void on_interval_time() {}
   FMT_CONSTEXPR void on_12_hour(numeric_system, pad_type) {}
   FMT_CONSTEXPR void on_minute(numeric_system, pad_type) {}
   FMT_CONSTEXPR void on_second(numeric_system, pad_type) {}
@@ -1892,6 +1900,18 @@ struct chrono_formatter {
   void on_day_of_year() {
     if (handle_nan_inf()) return;
     write(days(), 0);
+  }
+
+  void on_interval_time() {
+      if ((s.count() / 3600) != 0) return on_iso_time();
+      if ((s.count() / 60) != 0){
+        on_minute(numeric_system::standard, pad_type::unspecified);
+        *out++ = ':';
+        on_second(numeric_system::standard, pad_type::unspecified);
+      }
+      else{
+        on_second(numeric_system::standard, pad_type::unspecified);
+      }
   }
 
   void on_24_hour(numeric_system ns, pad_type pad) {

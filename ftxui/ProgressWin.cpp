@@ -130,8 +130,8 @@ ftxui::Elements& ProgressWin::addFileElements(ftxui::Elements& elements)
             text(file.curSizeM > 0 ? fmt::format(std::locale("en_US.UTF-8"), "{:L}/{:L}", file.curSizeM, file.fileSizeM)
                     : fmt::format(std::locale("en_US.UTF-8"), "---/{:L}", file.fileSizeM)),
             separator(),
-            text(speed > 0 ? fmt::format("{:%H:%M:%S}s/{:%H:%M:%S}s", diff, eta) 
-                    : fmt::format("{:%H:%M:%S}/---", diff)),
+            text(speed > 0 ? fmt::format("{:%i}s/{:%i}s", diff, eta) 
+                    : fmt::format("{:%i}/---", diff)),
             separator(),
             hbox({
               gauge(file.fileSizeM > 0 ? file.curSizeM * 1.0f / file.fileSizeM : 1),
