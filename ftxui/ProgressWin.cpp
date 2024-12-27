@@ -127,8 +127,8 @@ ftxui::Elements& ProgressWin::addFileElements(ftxui::Elements& elements)
         fileGrids.emplace_back(Elements({
             text(file.fileM),
             separator(),
-            text(file.curSizeM > 0 ? fmt::format(std::locale("en_US.UTF-8"), "{:L}/{:L}", file.curSizeM, file.fileSizeM)
-                    : fmt::format(std::locale("en_US.UTF-8"), "---/{:L}", file.fileSizeM)),
+            text(file.curSizeM > 0 ? fmt::format("{:L}/{:L}", file.curSizeM, file.fileSizeM)
+                    : fmt::format("---/{:L}", file.fileSizeM)),
             separator(),
             text(speed > 0 ? fmt::format("{:%i}s/{:%i}s", diff, eta) 
                     : fmt::format("{:%i}/---", diff)),
