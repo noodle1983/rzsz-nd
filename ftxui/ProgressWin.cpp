@@ -170,7 +170,7 @@ void ProgressWin::print(bool end)
 
     screenM.RunOnce(componentM);
     if (end){
-        std::cout << "\r\n" << std::flush;
+        std::cout << "\033[?25h\r\n" << std::flush;
     }
 }
 
