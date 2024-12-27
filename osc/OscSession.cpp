@@ -640,7 +640,7 @@ void OscSession::handleFileInfo(const nd::OscPkg* pkg)
         return;
     }
 
-    auto zmodemFile = new ZmodemFile(g_options->getServerWorkingDir(), filename, fileinfo->filesize());
+    auto zmodemFile = new ZmodemFile(g_options->getServerWorkingDir(), filename, (uint64_t)-1); //fileinfo->filesize()); // file can changed during transfer
     zmodemFile->setFileId(fileinfo->id());
     zmodemFileMapM[fileinfo->id()] = zmodemFile;
 
@@ -763,16 +763,13 @@ void OscSession::handleFileComplete(const nd::OscPkg* pkg)
     auto zmodemFile = it->second;
     if ((zmodemFile->isGood() && zmodemFile->getPos() != file_complete->filesize()) 
         || (zmodemFile->getSize() != file_complete->filesize())){
-        LOG_SE_ERROR("ERROR: [handleFileComplete]filesize mis-matched:id:" << file_complete->id()
-            << ", local:" << zmodemFile->getPos()
-            << ", pkg:" << file_complete->filesize());
-        sendByeOnResetM = true;
-        handleEvent(RESET_EVT);
-        return;
+        LOG_SE_WARN("WARN: [handleFileComplete]filesize changed during transfering! id:" << file_complete->id());
     }
-    LOG_SE_INFO("[handleFileComplete]id:" << zmodemFile->getFileId() 
-            << ", len:" << file_complete->filesize()
-            << ", file:" << zmodemFile->getFilename());
+    else{
+        LOG_SE_INFO("[handleFileComplete]id:" << zmodemFile->getFileId() 
+                << ", len:" << file_complete->filesize()
+                << ", file:" << zmodemFile->getFilename());
+    }
 
     sendFileCompleteAck(file_complete->id());
 
