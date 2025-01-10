@@ -640,7 +640,7 @@ void OscSession::handleFileInfo(const nd::OscPkg* pkg)
         return;
     }
 
-    auto zmodemFile = new ZmodemFile(g_options->getServerWorkingDir(), filename, (uint64_t)-1); //fileinfo->filesize()); // file can changed during transfer
+    auto zmodemFile = new ZmodemFile(g_options->getServerWorkingDir(), filename, fileinfo->filesize());
     zmodemFile->setFileId(fileinfo->id());
     zmodemFileMapM[fileinfo->id()] = zmodemFile;
 

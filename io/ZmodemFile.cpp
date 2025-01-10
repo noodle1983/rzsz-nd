@@ -125,10 +125,10 @@ bool ZmodemFile::write(const char* buf, unsigned long long len)
         LOG_ERROR("file not open! errno:" << errno);
 		return 0;
 	}
-	if (len + posM > fileSizeM){
-        LOG_ERROR("new buffer overwritten!pos:" << posM << ", len:" << len << ", filesize:" << fileSizeM);
-		return 0;
-	}
+	// if (len + posM > fileSizeM){
+    //     LOG_ERROR("new buffer overwritten!pos:" << posM << ", len:" << len << ", filesize:" << fileSizeM);
+	// 	return 0;
+	// }
     long long pos = fileM.tellp();
     fileM.write(buf, len);
 	long long written = (long long)fileM.tellp() - pos;
