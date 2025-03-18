@@ -49,7 +49,10 @@ public:
 	void setWritePos(unsigned long long pos);
     uint64_t validateFileCrc(uint64_t existLen, uint32_t existCrc);
 
-	bool isGood(){return fileM.good() && fileM.is_open();}
+	bool isGood(){
+        extern bool g_has_signaled;
+        return !g_has_signaled && fileM.good() && fileM.is_open();
+    }
 
 private:
 	bool parseInfo(const std::string& fileinfo);

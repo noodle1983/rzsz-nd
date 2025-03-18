@@ -15,6 +15,7 @@
 #include <dirent.h>
 #include <errno.h>
 
+extern bool g_has_signaled;
 uint32_t ZmodemFile::nextFileIdM = 0; 
 
 bool createDir(const std::string& thePath)
@@ -103,6 +104,7 @@ uint64_t ZmodemFile::getExistLen(uint32_t& crc)
 			crc = UPDC32(buffer[i], crc);
 		}
 		len += readed;
+        if (g_has_signaled) {return 0;}
 	} while (stream.good());
     crc = ~crc;;
 	stream.close();
@@ -165,11 +167,13 @@ uint64_t ZmodemFile::validateFileCrc(uint64_t existLen, uint32_t existCrc)
     do{
 		stream.read(buffer, sizeof(buffer));
 		uint64_t readed = stream.gcount();
+        if (readed == 0 || readed > sizeof(buffer)){ break; }
 		for (uint64_t i = 0; i < readed && len < existLen; i++) {
 			crc = UPDC32(buffer[i], crc);
             len++;
 		}
-	} while (stream.good());
+        if (g_has_signaled) {return 0;}
+	} while (stream.good() && len < existLen);
     crc = ~crc;;
     if (crc != existCrc) {return 0;}
 

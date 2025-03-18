@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
+extern bool g_has_signaled;
 
 namespace nd 
 {
@@ -43,6 +44,7 @@ namespace nd
                 if (written != dataLen){
                     waitUntilWritable(STDOUT_FILENO);
                 }
+                if(g_has_signaled){ return; }
             }while(writeIndex < len);
             g_progress_win->updateSentBytes(len);
         }

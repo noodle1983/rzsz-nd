@@ -123,11 +123,11 @@ endef
 all:SUFFIX=$(RELEASE_SUFFIX)
 all:CFLAGS+=$(RELEASE_CFLAGS)
 all:LDFLAGS+=$(RELEASE_LDFLAGS)
-all:$(RELEASE_TARGET)
+all:$(RELEASE_EXETARGET)
 debug:SUFFIX=$(DEBUG_SUFFIX)
 debug:CFLAGS+=$(DEBUG_CFLAGS)
 debug:LDFLAGS+=$(DEBUG_LDFLAGS)
-debug:$(DEBUG_TARGET)
+debug:$(DEBUG_EXETARGET)
 
 $(DEBUG_STATIC_TARGET):debug_depend $(DEBUG_OBJECTS)
 	$(call build_static_lib,$@,$(DEBUG_OBJECTS)) # no blank between ,
@@ -213,7 +213,7 @@ FORCE:
 clean:
 	@rm -rf $(OUTDIR_PREFIX)
 
-install: $(RELEASE_EXETARGET)
+install: all
 	@install -d $(PREFIX)
 	@for EXE_FILE in $(RELEASE_EXETARGET) ;  \
 	do					 \

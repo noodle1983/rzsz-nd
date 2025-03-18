@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 
+bool g_has_signaled = false;
 
 int hex2int(char hex)
 {
@@ -151,6 +152,7 @@ const char* getTypeStr(unsigned char type)
 
 void sigHandler(int n)
 {
+    g_has_signaled = true;
     resetTty();
     auto session = nd::Session::getGlobalSession();
     if (session != nullptr){
@@ -163,6 +165,7 @@ struct termios oldtty, tty;
 bool hasOldTty = false;
 void setTtyRawMode(){
     if (!hasOldTty){
+        g_has_signaled = false;
         tcgetattr(STDIN_FILENO, &oldtty);
         hasOldTty = true;
 
@@ -237,6 +240,14 @@ void initZmodemTab() {
 
 void waitUntilWritable(int fd){
     while(true){
+        if(g_has_signaled){ 
+            auto session = nd::Session::getGlobalSession();
+            if (session != nullptr){
+                session->asynHandleEvent(nd::Session::RESET_EVT);
+            }
+            return; 
+        }
+
         fd_set fds;
         struct timeval timeout;
         timeout.tv_sec = 0;

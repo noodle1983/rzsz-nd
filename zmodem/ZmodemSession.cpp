@@ -923,6 +923,13 @@ void ZmodemSession::onInputTimerout(void *arg)
     ZmodemSession* self = (ZmodemSession*)arg;
     char buffer[1024] = {0};
 
+    if(g_has_signaled){ 
+        self->asynHandleEvent(nd::Session::RESET_EVT);
+        self->inputTimerM = NULL;
+        self->startInputTimer();
+        return; 
+    }
+
     if (sizeof(self->bufferM) - self->bufferLenM < sizeof(buffer)){
         self->processNetworkInput(buffer, 0);
         self->inputTimerM = NULL;
